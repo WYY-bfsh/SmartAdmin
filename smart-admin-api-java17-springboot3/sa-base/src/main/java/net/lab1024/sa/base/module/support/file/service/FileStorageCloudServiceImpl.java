@@ -25,7 +25,6 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -116,15 +115,11 @@ public class FileStorageCloudServiceImpl implements IFileStorageService {
                 .contentDisposition("attachment;filename=" + urlEncoderFilename)
                 .acl(acl)
                 .build();
-        InputStream inputStream = null;
         try {
-            inputStream = file.getInputStream();
-            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(file.getBytes()));
         } catch (IOException e) {
             log.error("文件上传-发生异常：", e);
             return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "上传失败");
-        } finally {
-            IOUtils.closeQuietly(inputStream);
         }
         // 返回上传结果
         FileUploadVO uploadVO = new FileUploadVO();

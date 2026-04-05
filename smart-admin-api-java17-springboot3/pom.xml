@@ -38,7 +38,7 @@
         <commons-text.version>1.13.1</commons-text.version>
         <fast-excel.version>1.2.0</fast-excel.version>
         <poi.version>5.4.1</poi.version>
-        <awssdk-s3.version>2.31.78</awssdk-s3.version>
+        <awssdk-s3.version>2.42.6</awssdk-s3.version>
         <mysql-connector-j.version>9.3.0</mysql-connector-j.version>
         <hutool.version>5.8.39</hutool.version>
         <velocity-engine-core.version>2.4.1</velocity-engine-core.version>

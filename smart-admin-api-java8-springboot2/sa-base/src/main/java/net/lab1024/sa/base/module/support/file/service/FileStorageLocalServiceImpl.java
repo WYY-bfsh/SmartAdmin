@@ -37,6 +37,7 @@ import java.util.UUID;
 @Slf4j
 public class FileStorageLocalServiceImpl implements IFileStorageService {
 
+    private static final String FILE_SEPARATOR = "/";
 
     public static final String UPLOAD_MAPPING = "/upload";
 
@@ -78,8 +79,8 @@ public class FileStorageLocalServiceImpl implements IFileStorageService {
             // 目录不存在，新建
             directory.mkdirs();
         }
-        if (!path.endsWith(File.separator)) {
-            path = path + File.separator;
+        if (!path.endsWith(FILE_SEPARATOR)) {
+            path = path + FILE_SEPARATOR;
         }
         FileUploadVO fileUploadVO = new FileUploadVO();
         //原文件名
