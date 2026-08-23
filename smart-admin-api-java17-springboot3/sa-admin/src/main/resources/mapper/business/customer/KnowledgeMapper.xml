@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.customer.dao.KnowledgeDao">
+
+    <select id="query" resultType="net.lab1024.sa.admin.module.business.customer.domain.vo.KnowledgeVO">
+        SELECT *
+        FROM t_cs_knowledge
+        <where>
+            <if test="query.title != null and query.title != ''">
+                AND INSTR(title, #{query.title})
+            </if>
+            <if test="query.category != null">
+                AND category = #{query.category}
+            </if>
+            <if test="query.deletedFlag != null">
+                AND deleted_flag = #{query.deletedFlag}
+            </if>
+        </where>
+        <if test="query.sortItemList == null or query.sortItemList.size == 0">
+            ORDER BY sort ASC, knowledge_id DESC
+        </if>
+    </select>
+
+</mapper>

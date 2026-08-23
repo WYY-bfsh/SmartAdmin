@@ -23,6 +23,10 @@ import changeLogConst from './support/change-log-const';
 import jobConst from './support/job-const';
 import dictConst from './support/dict-const';
 import pay from './business/pay/pay-const';
+import aiClip from './business/media/ai-clip-const';
+import music from './business/media/music-const';
+import yingyue from './business/media/yingyue-const';
+import customer from './business/customer/customer-const';
 
 export default {
   FLAG_NUMBER_ENUM,
@@ -43,4 +47,8 @@ export default {
   ...jobConst,
   ...dictConst,
   ...pay,
+  ...aiClip,
+  ...music,
+  ...yingyue,
+  ...customer,
 };

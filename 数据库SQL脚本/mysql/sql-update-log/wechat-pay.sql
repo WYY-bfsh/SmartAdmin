@@ -65,3 +65,24 @@ WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 307);
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
 SELECT 308, '查看配置', 3, 302, 1, NULL, NULL, 1, 'pay:config:query', 'pay:config:query', NULL, 302, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW()
 WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 308);
+
+-- 演示订单（没有真实商户号时用于列表展示，可重复执行）
+INSERT INTO `t_pay_order` (`order_no`, `description`, `amount`, `trade_type`, `pay_status`, `code_url`, `transaction_id`, `openid`, `payer_total`, `success_time`, `refund_no`, `refund_id`, `refund_amount`, `refund_time`, `close_time`, `remark`, `deleted_flag`, `create_time`, `update_time`)
+SELECT 'WX202608221000010001', '演示-会员月卡', 1, 1, 10, 'weixin://wxpay/bizpayurl?pr=DEMOWX202608221000010001', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, '系统演示数据', 0, DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_SUB(NOW(), INTERVAL 2 HOUR)
+WHERE NOT EXISTS (SELECT 1 FROM `t_pay_order` WHERE `order_no` = 'WX202608221000010001');
+
+INSERT INTO `t_pay_order` (`order_no`, `description`, `amount`, `trade_type`, `pay_status`, `code_url`, `transaction_id`, `openid`, `payer_total`, `success_time`, `refund_no`, `refund_id`, `refund_amount`, `refund_time`, `close_time`, `remark`, `deleted_flag`, `create_time`, `update_time`)
+SELECT 'WX202608211430220002', '演示-办公用品采购', 12800, 1, 20, NULL, '4200002208261234567890123456', 'oDEMO00010002', 12800, DATE_SUB(NOW(), INTERVAL 2 DAY), NULL, NULL, 0, NULL, NULL, '系统演示数据', 0, DATE_SUB(NOW(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 2 DAY)
+WHERE NOT EXISTS (SELECT 1 FROM `t_pay_order` WHERE `order_no` = 'WX202608211430220002');
+
+INSERT INTO `t_pay_order` (`order_no`, `description`, `amount`, `trade_type`, `pay_status`, `code_url`, `transaction_id`, `openid`, `payer_total`, `success_time`, `refund_no`, `refund_id`, `refund_amount`, `refund_time`, `close_time`, `remark`, `deleted_flag`, `create_time`, `update_time`)
+SELECT 'WX202608201015330003', '演示-已关闭订单', 990, 1, 30, 'weixin://wxpay/bizpayurl?pr=DEMOWX202608201015330003', NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, DATE_SUB(NOW(), INTERVAL 3 DAY), '系统演示数据', 0, DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY)
+WHERE NOT EXISTS (SELECT 1 FROM `t_pay_order` WHERE `order_no` = 'WX202608201015330003');
+
+INSERT INTO `t_pay_order` (`order_no`, `description`, `amount`, `trade_type`, `pay_status`, `code_url`, `transaction_id`, `openid`, `payer_total`, `success_time`, `refund_no`, `refund_id`, `refund_amount`, `refund_time`, `close_time`, `remark`, `deleted_flag`, `create_time`, `update_time`)
+SELECT 'WX202608191600440004', '演示-全额退款', 6600, 1, 50, NULL, '4200001908261234567890123456', 'oDEMO00040004', 6600, DATE_SUB(NOW(), INTERVAL 4 DAY), 'RF202608191600440004', '50000001600440004', 6600, DATE_SUB(NOW(), INTERVAL 4 DAY), NULL, '系统演示数据', 0, DATE_SUB(NOW(), INTERVAL 4 DAY), DATE_SUB(NOW(), INTERVAL 4 DAY)
+WHERE NOT EXISTS (SELECT 1 FROM `t_pay_order` WHERE `order_no` = 'WX202608191600440004');
+
+INSERT INTO `t_pay_order` (`order_no`, `description`, `amount`, `trade_type`, `pay_status`, `code_url`, `transaction_id`, `openid`, `payer_total`, `success_time`, `refund_no`, `refund_id`, `refund_amount`, `refund_time`, `close_time`, `remark`, `deleted_flag`, `create_time`, `update_time`)
+SELECT 'WX202608181100550005', '演示-部分退款', 19900, 1, 40, NULL, '4200001808261234567890123456', 'oDEMO00050005', 19900, DATE_SUB(NOW(), INTERVAL 5 DAY), 'RF202608181100550005', '50000001100550005', 5000, DATE_SUB(NOW(), INTERVAL 5 DAY), NULL, '系统演示数据', 0, DATE_SUB(NOW(), INTERVAL 5 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY)
+WHERE NOT EXISTS (SELECT 1 FROM `t_pay_order` WHERE `order_no` = 'WX202608181100550005');

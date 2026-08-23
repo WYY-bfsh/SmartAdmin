@@ -25,7 +25,7 @@ import dictPlugin from '/@/plugins/dict-plugin';
 import smartEnumPlugin from '/@/plugins/smart-enums-plugin';
 import { buildRoutes, router } from '/@/router';
 import { store } from '/@/store';
-import { useUserStore } from '/@/store/modules/system/user';
+import { ensureMediaMenus, ensurePayMenus, ensureCustomerMenus, useUserStore } from '/@/store/modules/system/user';
 import 'ant-design-vue/dist/reset.css';
 import '/@/theme/index.less';
 import { localRead } from '/@/utils/local-util';
@@ -56,6 +56,7 @@ async function getLoginInfo() {
     const res = await loginApi.getLoginInfo();
     const dictRes = await dictApi.getAllDictData();
     //构建系统的路由
+    res.data.menuList = ensureCustomerMenus(ensureMediaMenus(ensurePayMenus(res.data.menuList)));
     let menuRouterList = res.data.menuList.filter((e) => e.path || e.frameUrl);
     buildRoutes(menuRouterList);
     initVue();

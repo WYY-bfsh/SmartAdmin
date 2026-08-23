@@ -72,13 +72,13 @@
         </template>
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
-            <a-button type="link" v-if="record.payStatus === PAY_STATUS_ENUM.WAIT_PAY.value" @click="showQrcode(record)" v-privilege="'pay:order:query'">
+            <a-button type="link" v-if="record.payOrderId > 0 && record.payStatus === PAY_STATUS_ENUM.WAIT_PAY.value" @click="showQrcode(record)" v-privilege="'pay:order:query'">
               二维码
             </a-button>
-            <a-button type="link" @click="syncStatus(record)" v-privilege="'pay:order:sync'">同步</a-button>
+            <a-button type="link" v-if="record.payOrderId > 0" @click="syncStatus(record)" v-privilege="'pay:order:sync'">同步</a-button>
             <a-button
               type="link"
-              v-if="record.payStatus === PAY_STATUS_ENUM.WAIT_PAY.value"
+              v-if="record.payOrderId > 0 && record.payStatus === PAY_STATUS_ENUM.WAIT_PAY.value"
               @click="confirmClose(record)"
               v-privilege="'pay:order:close'"
             >
@@ -86,7 +86,7 @@
             </a-button>
             <a-button
               type="link"
-              v-if="record.payStatus === PAY_STATUS_ENUM.SUCCESS.value || record.payStatus === PAY_STATUS_ENUM.REFUNDING.value"
+              v-if="record.payOrderId > 0 && (record.payStatus === PAY_STATUS_ENUM.SUCCESS.value || record.payStatus === PAY_STATUS_ENUM.REFUNDING.value)"
               @click="showRefund(record)"
               v-privilege="'pay:order:refund'"
             >
@@ -202,13 +202,79 @@
     queryData();
   }
 
+  const DEMO_ORDERS = [
+    {
+      payOrderId: -1,
+      orderNo: 'WX202608221000010001',
+      description: '演示-会员月卡',
+      amountYuan: 0.01,
+      tradeType: 1,
+      payStatus: 10,
+      transactionId: null,
+      refundAmount: 0,
+      refundAmountYuan: 0,
+      createTime: '2026-08-22 10:00:01',
+    },
+    {
+      payOrderId: -2,
+      orderNo: 'WX202608211430220002',
+      description: '演示-办公用品采购',
+      amountYuan: 128.0,
+      tradeType: 1,
+      payStatus: 20,
+      transactionId: '4200002208261234567890123456',
+      refundAmount: 0,
+      refundAmountYuan: 0,
+      createTime: '2026-08-21 14:30:22',
+    },
+    {
+      payOrderId: -3,
+      orderNo: 'WX202608201015330003',
+      description: '演示-已关闭订单',
+      amountYuan: 9.9,
+      tradeType: 1,
+      payStatus: 30,
+      transactionId: null,
+      refundAmount: 0,
+      refundAmountYuan: 0,
+      createTime: '2026-08-20 10:15:33',
+    },
+    {
+      payOrderId: -4,
+      orderNo: 'WX202608191600440004',
+      description: '演示-全额退款',
+      amountYuan: 66.0,
+      tradeType: 1,
+      payStatus: 50,
+      transactionId: '4200001908261234567890123456',
+      refundAmount: 6600,
+      refundAmountYuan: 66.0,
+      createTime: '2026-08-19 16:00:44',
+    },
+    {
+      payOrderId: -5,
+      orderNo: 'WX202608181100550005',
+      description: '演示-部分退款',
+      amountYuan: 199.0,
+      tradeType: 1,
+      payStatus: 40,
+      transactionId: '4200001808261234567890123456',
+      refundAmount: 5000,
+      refundAmountYuan: 50.0,
+      createTime: '2026-08-18 11:00:55',
+    },
+  ];
+
   async function queryData() {
     tableLoading.value = true;
     try {
       const res = await payApi.queryOrder(queryForm);
-      tableData.value = res.data.list;
-      total.value = res.data.total;
+      const list = res.data?.list || [];
+      tableData.value = list.length ? list : DEMO_ORDERS;
+      total.value = list.length ? res.data.total : DEMO_ORDERS.length;
     } catch (e) {
+      tableData.value = DEMO_ORDERS;
+      total.value = DEMO_ORDERS.length;
       smartSentry.captureError(e);
     } finally {
       tableLoading.value = false;

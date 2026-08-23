@@ -47,10 +47,17 @@ public class WeChatPayClient {
     private volatile NotificationParser notificationParser;
 
     public boolean isEnabled() {
-        return Boolean.TRUE.equals(properties.getEnabled());
+        return Boolean.TRUE.equals(properties.getEnabled()) || isMock();
+    }
+
+    public boolean isMock() {
+        return Boolean.TRUE.equals(properties.getMock());
     }
 
     public boolean isConfigured() {
+        if (isMock()) {
+            return true;
+        }
         return StringUtils.isNoneBlank(properties.getAppId(), properties.getMchId(), properties.getApiV3Key(),
                 properties.getMerchantSerialNumber(), properties.getNotifyUrl())
                 && (StringUtils.isNotBlank(properties.getPrivateKey()) || StringUtils.isNotBlank(properties.getPrivateKeyPath()));
@@ -61,6 +68,9 @@ public class WeChatPayClient {
     }
 
     public String prepayNative(String orderNo, String description, int amountFen) {
+        if (isMock()) {
+            return "weixin://wxpay/bizpayurl?pr=DEMO" + orderNo;
+        }
         NativePayService service = getNativePayService();
         PrepayRequest request = new PrepayRequest();
         Amount amount = new Amount();
@@ -88,6 +98,9 @@ public class WeChatPayClient {
     }
 
     public void closeOrder(String orderNo) {
+        if (isMock()) {
+            return;
+        }
         CloseOrderRequest request = new CloseOrderRequest();
         request.setMchid(properties.getMchId());
         request.setOutTradeNo(orderNo);
@@ -161,6 +174,9 @@ public class WeChatPayClient {
     }
 
     private void ensureReady() {
+        if (isMock()) {
+            return;
+        }
         if (!isEnabled()) {
             throw new BusinessException("微信支付未启用，请在 sa-base.yaml 中设置 wechat.pay.enabled=true");
         }

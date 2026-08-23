@@ -12,6 +12,9 @@ public class WeChatPayConfigVO {
     @Schema(description = "是否启用")
     private Boolean enabled;
 
+    @Schema(description = "是否演示模式（无真实商户号）")
+    private Boolean mock;
+
     @Schema(description = "商户资料是否填写完整")
     private Boolean configured;
 

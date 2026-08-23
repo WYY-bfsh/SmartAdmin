@@ -3,6 +3,7 @@ package net.lab1024.sa.admin.module.business.pay.service;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.extra.qrcode.QrCodeUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wechat.pay.java.core.exception.ServiceException;
 import com.wechat.pay.java.core.exception.ValidationException;
@@ -52,6 +53,8 @@ public class PayOrderService {
 
     private static final DateTimeFormatter ORDER_NO_TIME = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
 
+    private volatile boolean demoSeedAttempted = false;
+
     @Resource
     private PayOrderDao payOrderDao;
 
@@ -61,8 +64,10 @@ public class PayOrderService {
     public ResponseDTO<WeChatPayConfigVO> getConfig() {
         WeChatPayConfigVO vo = new WeChatPayConfigVO();
         vo.setEnabled(weChatPayClient.isEnabled());
+        vo.setMock(weChatPayClient.isMock());
         vo.setConfigured(weChatPayClient.isConfigured());
-        vo.setAppId(mask(weChatPayClient.getProperties().getAppId()));
+        String appId = weChatPayClient.getProperties().getAppId();
+        vo.setAppId(weChatPayClient.isMock() ? appId : mask(appId));
         vo.setMchId(weChatPayClient.getProperties().getMchId());
         vo.setNotifyUrl(weChatPayClient.getProperties().getNotifyUrl());
         vo.setPrivateKeyReady(StringUtils.isNotBlank(weChatPayClient.getProperties().getPrivateKey())
@@ -71,6 +76,7 @@ public class PayOrderService {
     }
 
     public ResponseDTO<PageResult<PayOrderVO>> query(PayOrderQueryForm queryForm) {
+        seedDemoOrdersIfNeeded();
         queryForm.setDeletedFlag(false);
         Page<?> page = SmartPageUtil.convert2PageQuery(queryForm);
         List<PayOrderVO> list = payOrderDao.query(page, queryForm);
@@ -82,6 +88,9 @@ public class PayOrderService {
         PayOrderEntity entity = payOrderDao.selectById(payOrderId);
         if (entity == null || Boolean.TRUE.equals(entity.getDeletedFlag())) {
             return ResponseDTO.userErrorParam("支付订单不存在");
+        }
+        if (weChatPayClient.isMock()) {
+            applyMockAutoPay(entity);
         }
         PayOrderVO vo = SmartBeanUtil.copy(entity, PayOrderVO.class);
         fillAmountYuan(vo);
@@ -103,6 +112,7 @@ public class PayOrderService {
         entity.setRemark(createForm.getRemark());
         entity.setCreateUserId(AdminRequestUtil.getRequestUserId());
         entity.setDeletedFlag(Boolean.FALSE);
+        entity.setCreateTime(LocalDateTime.now());
         payOrderDao.insert(entity);
 
         String codeUrl;
@@ -124,6 +134,7 @@ public class PayOrderService {
         vo.setCodeUrl(codeUrl);
         vo.setQrcodeBase64(toQrcodeBase64(codeUrl));
         vo.setPayStatus(entity.getPayStatus());
+        vo.setMock(weChatPayClient.isMock());
         return ResponseDTO.ok(vo);
     }
 
@@ -143,18 +154,26 @@ public class PayOrderService {
         vo.setCodeUrl(entity.getCodeUrl());
         vo.setQrcodeBase64(toQrcodeBase64(entity.getCodeUrl()));
         vo.setPayStatus(entity.getPayStatus());
+        vo.setMock(weChatPayClient.isMock());
         return ResponseDTO.ok(vo);
     }
 
     public ResponseDTO<PayOrderVO> sync(Long payOrderId) {
         PayOrderEntity entity = requireOrder(payOrderId);
-        try {
-            Transaction transaction = weChatPayClient.queryByOutTradeNo(entity.getOrderNo());
-            applyTransaction(entity, transaction);
-            payOrderDao.updateById(entity);
-        } catch (ServiceException e) {
-            log.error("同步微信支付状态失败, orderNo={}, code={}, msg={}", entity.getOrderNo(), e.getErrorCode(), e.getErrorMessage());
-            throw new BusinessException("同步微信订单失败：" + e.getErrorMessage());
+        if (weChatPayClient.isMock()) {
+            if (PayStatusEnum.WAIT_PAY.equalsValue(entity.getPayStatus())) {
+                mockPaySuccess(entity);
+                payOrderDao.updateById(entity);
+            }
+        } else {
+            try {
+                Transaction transaction = weChatPayClient.queryByOutTradeNo(entity.getOrderNo());
+                applyTransaction(entity, transaction);
+                payOrderDao.updateById(entity);
+            } catch (ServiceException e) {
+                log.error("同步微信支付状态失败, orderNo={}, code={}, msg={}", entity.getOrderNo(), e.getErrorCode(), e.getErrorMessage());
+                throw new BusinessException("同步微信订单失败：" + e.getErrorMessage());
+            }
         }
         PayOrderVO vo = SmartBeanUtil.copy(entity, PayOrderVO.class);
         fillAmountYuan(vo);
@@ -192,20 +211,30 @@ public class PayOrderService {
         }
 
         String refundNo = generateRefundNo();
-        Refund refund;
-        try {
-            refund = weChatPayClient.refund(entity.getOrderNo(), refundNo, entity.getAmount(), refundFen, refundForm.getReason());
-        } catch (ServiceException e) {
-            log.error("微信退款失败, orderNo={}, code={}, msg={}", entity.getOrderNo(), e.getErrorCode(), e.getErrorMessage());
-            throw new BusinessException("微信退款失败：" + e.getErrorMessage());
+        String refundId;
+        boolean refundSuccess = true;
+        if (weChatPayClient.isMock()) {
+            refundId = "5000000" + RandomStringUtils.randomNumeric(18);
+        } else {
+            Refund refund;
+            try {
+                refund = weChatPayClient.refund(entity.getOrderNo(), refundNo, entity.getAmount(), refundFen, refundForm.getReason());
+            } catch (ServiceException e) {
+                log.error("微信退款失败, orderNo={}, code={}, msg={}", entity.getOrderNo(), e.getErrorCode(), e.getErrorMessage());
+                throw new BusinessException("微信退款失败：" + e.getErrorMessage());
+            }
+            refundId = refund.getRefundId();
+            refundSuccess = refund.getStatus() == Status.SUCCESS;
         }
 
         entity.setRefundNo(refundNo);
-        entity.setRefundId(refund.getRefundId());
+        entity.setRefundId(refundId);
         entity.setRefundAmount(alreadyRefund + refundFen);
         entity.setRefundTime(LocalDateTime.now());
         if (entity.getRefundAmount() >= entity.getAmount()) {
-            entity.setPayStatus(refund.getStatus() == Status.SUCCESS ? PayStatusEnum.REFUND.getValue() : PayStatusEnum.REFUNDING.getValue());
+            entity.setPayStatus(refundSuccess ? PayStatusEnum.REFUND.getValue() : PayStatusEnum.REFUNDING.getValue());
+        } else if (weChatPayClient.isMock()) {
+            entity.setPayStatus(PayStatusEnum.REFUNDING.getValue());
         }
         if (StringUtils.isNotBlank(refundForm.getReason())) {
             entity.setRemark(StringUtils.defaultString(entity.getRemark()) + " 退款：" + refundForm.getReason());
@@ -348,5 +377,89 @@ public class PayOrderService {
 
     private String failJson(String message) {
         return "{\"code\":\"FAIL\",\"message\":\"" + message + "\"}";
+    }
+
+    private void seedDemoOrdersIfNeeded() {
+        if (!weChatPayClient.isMock() || demoSeedAttempted) {
+            return;
+        }
+        synchronized (this) {
+            if (demoSeedAttempted) {
+                return;
+            }
+            try {
+                Long count = payOrderDao.selectCount(new LambdaQueryWrapper<PayOrderEntity>()
+                        .eq(PayOrderEntity::getDeletedFlag, false));
+                if (count != null && count > 0) {
+                    demoSeedAttempted = true;
+                    return;
+                }
+                LocalDateTime now = LocalDateTime.now();
+                insertDemoOrder("WX202608221000010001", "演示-会员月卡", 1, PayStatusEnum.WAIT_PAY.getValue(),
+                        "weixin://wxpay/bizpayurl?pr=DEMOWX202608221000010001", null, null, 0, null, now.minusHours(2), null);
+                insertDemoOrder("WX202608211430220002", "演示-办公用品采购", 12800, PayStatusEnum.SUCCESS.getValue(),
+                        null, "4200002208261234567890123456", 12800, 0, now.minusDays(2).plusHours(1), now.minusDays(2), null);
+                insertDemoOrder("WX202608201015330003", "演示-已关闭订单", 990, PayStatusEnum.CLOSED.getValue(),
+                        "weixin://wxpay/bizpayurl?pr=DEMOWX202608201015330003", null, null, 0, null, now.minusDays(3), now.minusDays(3).plusMinutes(20));
+                insertDemoOrder("WX202608191600440004", "演示-全额退款", 6600, PayStatusEnum.REFUND.getValue(),
+                        null, "4200001908261234567890123456", 6600, 6600, now.minusDays(4).plusMinutes(3), now.minusDays(4), null);
+                insertDemoOrder("WX202608181100550005", "演示-部分退款", 19900, PayStatusEnum.REFUNDING.getValue(),
+                        null, "4200001808261234567890123456", 19900, 5000, now.minusDays(5).plusMinutes(6), now.minusDays(5), null);
+                demoSeedAttempted = true;
+            } catch (Exception e) {
+                log.warn("演示订单写入失败，请先执行 wechat-pay.sql 创建 t_pay_order：{}", e.getMessage());
+            }
+        }
+    }
+
+    private void insertDemoOrder(String orderNo, String description, int amount, int payStatus, String codeUrl,
+                                 String transactionId, Integer payerTotal, int refundAmount, LocalDateTime successTime,
+                                 LocalDateTime createTime, LocalDateTime closeTime) {
+        PayOrderEntity entity = new PayOrderEntity();
+        entity.setOrderNo(orderNo);
+        entity.setDescription(description);
+        entity.setAmount(amount);
+        entity.setTradeType(PayTradeTypeEnum.NATIVE.getValue());
+        entity.setPayStatus(payStatus);
+        entity.setCodeUrl(codeUrl);
+        entity.setTransactionId(transactionId);
+        entity.setOpenid(transactionId == null ? null : "oDEMO" + orderNo.substring(orderNo.length() - 8));
+        entity.setPayerTotal(payerTotal);
+        entity.setSuccessTime(successTime);
+        entity.setRefundAmount(refundAmount);
+        if (refundAmount > 0) {
+            entity.setRefundNo("RF" + orderNo.substring(2));
+            entity.setRefundId("5000000" + orderNo.substring(orderNo.length() - 12));
+            entity.setRefundTime(successTime == null ? createTime.plusHours(2) : successTime.plusHours(2));
+        }
+        entity.setCloseTime(closeTime);
+        entity.setRemark("系统演示数据");
+        entity.setDeletedFlag(Boolean.FALSE);
+        entity.setCreateTime(createTime);
+        entity.setUpdateTime(createTime);
+        payOrderDao.insert(entity);
+    }
+
+    private void applyMockAutoPay(PayOrderEntity entity) {
+        if (!PayStatusEnum.WAIT_PAY.equalsValue(entity.getPayStatus()) || entity.getCreateTime() == null) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (entity.getCreateTime().isBefore(now.minusMinutes(10))) {
+            return;
+        }
+        if (entity.getCreateTime().plusSeconds(8).isAfter(now)) {
+            return;
+        }
+        mockPaySuccess(entity);
+        payOrderDao.updateById(entity);
+    }
+
+    private void mockPaySuccess(PayOrderEntity entity) {
+        entity.setPayStatus(PayStatusEnum.SUCCESS.getValue());
+        entity.setTransactionId("420000" + LocalDateTime.now().format(ORDER_NO_TIME) + RandomStringUtils.randomNumeric(5));
+        entity.setOpenid("oDEMO" + RandomStringUtils.randomAlphanumeric(22));
+        entity.setPayerTotal(entity.getAmount());
+        entity.setSuccessTime(LocalDateTime.now());
     }
 }

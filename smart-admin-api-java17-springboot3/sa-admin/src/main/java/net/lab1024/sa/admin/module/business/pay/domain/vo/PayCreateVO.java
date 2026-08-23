@@ -31,4 +31,7 @@ public class PayCreateVO {
 
     @Schema(description = "支付状态")
     private Integer payStatus;
+
+    @Schema(description = "是否演示模式")
+    private Boolean mock;
 }

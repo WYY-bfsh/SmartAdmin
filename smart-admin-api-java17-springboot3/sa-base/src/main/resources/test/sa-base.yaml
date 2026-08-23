@@ -68,8 +68,8 @@ spring:
   # 上传文件和请求大小
   servlet:
     multipart:
-      max-file-size: 20MB # 单个文件的最大大小
-      max-request-size: 10MB # 整个请求的最大大小
+      max-file-size: 200MB # 单个文件的最大大小（媒体中心成片/素材）
+      max-request-size: 200MB # 整个请求的最大大小
 
   # 缓存实现类型
   cache:
@@ -191,6 +191,7 @@ smart:
 wechat:
   pay:
     enabled: false
+    mock: false
     app-id:
     mch-id:
     api-v3-key:

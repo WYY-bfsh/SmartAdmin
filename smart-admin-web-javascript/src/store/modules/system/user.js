@@ -15,6 +15,8 @@ import { MENU_TYPE_ENUM } from '/@/constants/system/menu-const';
 import { messageApi } from '/@/api/support/message-api';
 import { smartSentry } from '/@/lib/smart-sentry';
 import { localRead, localSave, localRemove } from '/@/utils/local-util';
+import { ensureMediaMenus, prependMediaMenuTree } from '/@/store/modules/business/media-menus';
+import { ensureCustomerMenus, prependCustomerMenuTree } from '/@/store/modules/business/customer-menus';
 
 
 export const useUserStore = defineStore({
@@ -82,7 +84,7 @@ export const useUserStore = defineStore({
     },
     //菜单树
     getMenuTree(state) {
-      return state.menuTree;
+      return prependCustomerMenuTree(prependMediaMenuTree(prependPayMenuTree(state.menuTree)));
     },
     //菜单的路由
     getMenuRouterList(state) {
@@ -165,6 +167,9 @@ export const useUserStore = defineStore({
       this.lastLoginIpRegion = data.lastLoginIpRegion;
       this.lastLoginUserAgent = data.lastLoginUserAgent;
       this.lastLoginTime = data.lastLoginTime;
+
+      //菜单权限（库里还没有支付菜单时，前端补一套，保证侧栏能看到）
+      data.menuList = ensureCustomerMenus(ensureMediaMenus(ensurePayMenus(data.menuList)));
 
       //菜单权限
       this.menuTree = buildMenuTree(data.menuList);
@@ -329,6 +334,85 @@ function recursiveBuildMenuParentIdListMap(menuList, parentMenuList, menuParentI
       menuParentIdListMap.set(menuIdStr, cloneParentMenuList);
     }
   }
+}
+
+function buildPayCatalog() {
+  return {
+    menuId: 300,
+    menuName: '微信支付',
+    menuType: MENU_TYPE_ENUM.CATALOG.value,
+    parentId: 0,
+    path: '/pay',
+    icon: 'WechatOutlined',
+    visibleFlag: true,
+    disabledFlag: false,
+    deletedFlag: false,
+    children: [
+      {
+        menuId: 301,
+        menuName: '支付订单',
+        menuType: MENU_TYPE_ENUM.MENU.value,
+        parentId: 300,
+        path: '/pay/order',
+        component: '/business/pay/pay-order-list.vue',
+        icon: 'AccountBookOutlined',
+        visibleFlag: true,
+        disabledFlag: false,
+        deletedFlag: false,
+        cacheFlag: true,
+        frameFlag: false,
+      },
+      {
+        menuId: 302,
+        menuName: '商户配置',
+        menuType: MENU_TYPE_ENUM.MENU.value,
+        parentId: 300,
+        path: '/pay/config',
+        component: '/business/pay/wechat-pay-config.vue',
+        icon: 'SettingOutlined',
+        visibleFlag: true,
+        disabledFlag: false,
+        deletedFlag: false,
+        cacheFlag: false,
+        frameFlag: false,
+      },
+    ],
+  };
+}
+
+function prependPayMenuTree(menuTree) {
+  const tree = Array.isArray(menuTree) ? menuTree : [];
+  if (tree.some((e) => e.menuId === 300 || e.menuName === '微信支付')) {
+    return tree;
+  }
+  return [buildPayCatalog(), ...tree];
+}
+
+export { ensureMediaMenus } from '/@/store/modules/business/media-menus';
+export { ensureCustomerMenus } from '/@/store/modules/business/customer-menus';
+
+/**
+ * 后端未写入支付菜单时，前端补齐目录/页面/按钮权限
+ */
+export function ensurePayMenus(menuList) {
+  const list = Array.isArray(menuList) ? [...menuList] : [];
+  const exists = list.some(
+    (e) => e.menuId === 300 || e.menuId === 301 || e.component === '/business/pay/pay-order-list.vue'
+  );
+  if (exists) {
+    return list;
+  }
+  return list.concat([
+    { menuId: 300, menuName: '微信支付', menuType: MENU_TYPE_ENUM.CATALOG.value, parentId: 0, sort: 4, path: '/pay', component: null, icon: 'WechatOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: false, frameFlag: false },
+    { menuId: 301, menuName: '支付订单', menuType: MENU_TYPE_ENUM.MENU.value, parentId: 300, sort: 1, path: '/pay/order', component: '/business/pay/pay-order-list.vue', icon: 'AccountBookOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: true, frameFlag: false },
+    { menuId: 302, menuName: '商户配置', menuType: MENU_TYPE_ENUM.MENU.value, parentId: 300, sort: 2, path: '/pay/config', component: '/business/pay/wechat-pay-config.vue', icon: 'SettingOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: false, frameFlag: false },
+    { menuId: 303, menuName: '查询订单', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:query', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    { menuId: 304, menuName: '发起支付', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:create', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    { menuId: 305, menuName: '关闭订单', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:close', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    { menuId: 306, menuName: '申请退款', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:refund', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    { menuId: 307, menuName: '同步状态', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:sync', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    { menuId: 308, menuName: '查看配置', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 302, webPerms: 'pay:config:query', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+  ]);
 }
 
 /**

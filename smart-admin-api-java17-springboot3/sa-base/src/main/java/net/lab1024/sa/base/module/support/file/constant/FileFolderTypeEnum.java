@@ -37,6 +37,11 @@ public enum FileFolderTypeEnum implements BaseEnum {
      */
     FEEDBACK(4, FileFolderTypeEnum.FOLDER_PRIVATE + "/feedback/", "意见反馈"),
 
+    /**
+     * 媒体中心（公开可读，便于音视频在线播放）
+     */
+    MEDIA(5, FileFolderTypeEnum.FOLDER_PUBLIC + "/media/", "媒体中心"),
+
     ;
 
     /**

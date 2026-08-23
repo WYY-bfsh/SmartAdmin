@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.customer.dao.TicketDao">
+
+    <select id="query" resultType="net.lab1024.sa.admin.module.business.customer.domain.vo.TicketVO">
+        SELECT *
+        FROM t_cs_ticket
+        <where>
+            <if test="query.ticketNo != null and query.ticketNo != ''">
+                AND INSTR(ticket_no, #{query.ticketNo})
+            </if>
+            <if test="query.title != null and query.title != ''">
+                AND INSTR(title, #{query.title})
+            </if>
+            <if test="query.ticketType != null">
+                AND ticket_type = #{query.ticketType}
+            </if>
+            <if test="query.priority != null">
+                AND priority = #{query.priority}
+            </if>
+            <if test="query.status != null">
+                AND status = #{query.status}
+            </if>
+            <if test="query.createTimeBegin != null">
+                AND create_time &gt;= #{query.createTimeBegin}
+            </if>
+            <if test="query.createTimeEnd != null">
+                AND create_time &lt; DATE_ADD(#{query.createTimeEnd}, INTERVAL 1 DAY)
+            </if>
+            <if test="query.deletedFlag != null">
+                AND deleted_flag = #{query.deletedFlag}
+            </if>
+        </where>
+        <if test="query.sortItemList == null or query.sortItemList.size == 0">
+            ORDER BY ticket_id DESC
+        </if>
+    </select>
+
+    <select id="selectByTicketNo" resultType="net.lab1024.sa.admin.module.business.customer.domain.entity.TicketEntity">
+        SELECT *
+        FROM t_cs_ticket
+        WHERE ticket_no = #{ticketNo}
+          AND deleted_flag = 0
+        LIMIT 1
+    </select>
+
+</mapper>

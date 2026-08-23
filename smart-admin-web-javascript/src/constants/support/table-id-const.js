@@ -16,6 +16,8 @@ let supportInitTableId = 20000;
 let businessOAInitTableId = 30000;
 
 let businessERPInitTableId = 40000;
+let businessMediaInitTableId = 50000;
+let businessCustomerInitTableId = 60000;
 
 export const TABLE_ID_CONST = {
   /**
@@ -34,6 +36,17 @@ export const TABLE_ID_CONST = {
     },
     PAY: {
       ORDER: businessERPInitTableId + 11, //微信支付订单
+    },
+    MEDIA: {
+      AI_PROJECT: businessMediaInitTableId + 1,
+      AI_MATERIAL: businessMediaInitTableId + 2,
+      AI_TASK: businessMediaInitTableId + 3,
+      MUSIC_SONG: businessMediaInitTableId + 4,
+      YINGYUE_VIDEO: businessMediaInitTableId + 5,
+    },
+    CUSTOMER: {
+      TICKET: businessCustomerInitTableId + 1,
+      KNOWLEDGE: businessCustomerInitTableId + 2,
     },
   },
 

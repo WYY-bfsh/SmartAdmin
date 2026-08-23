@@ -11,7 +11,12 @@
       <a-tag :color="payInfo.payStatus === PAY_STATUS_ENUM.SUCCESS.value ? 'green' : 'orange'">
         {{ $smartEnumPlugin.getDescByValue('PAY_STATUS_ENUM', payInfo.payStatus) }}
       </a-tag>
-      <div class="pay-qrcode-tip">请使用微信扫描二维码完成支付，支付成功后会自动刷新</div>
+      <div class="pay-qrcode-tip">
+        {{ payInfo.mock ? '演示模式：不会向微信收款。可点下方按钮模拟支付，或等待约 8 秒自动完成。' : '请使用微信扫描二维码完成支付，支付成功后会自动刷新' }}
+      </div>
+      <a-button v-if="payInfo.mock && payInfo.payStatus === PAY_STATUS_ENUM.WAIT_PAY.value" type="primary" class="pay-qrcode-mock-btn" @click="simulatePay">
+        模拟支付成功
+      </a-button>
       <div class="pay-qrcode-no">订单号：{{ payInfo.orderNo }}</div>
     </div>
   </a-modal>
@@ -34,6 +39,7 @@
     amountYuan: 0,
     qrcodeBase64: '',
     payStatus: PAY_STATUS_ENUM.WAIT_PAY.value,
+    mock: false,
   });
 
   let timer = null;
@@ -54,6 +60,7 @@
       amountYuan: 0,
       qrcodeBase64: '',
       payStatus: PAY_STATUS_ENUM.WAIT_PAY.value,
+      mock: false,
     });
     visible.value = true;
     try {
@@ -64,6 +71,22 @@
         Object.assign(payInfo, res.data);
       }
       startPoll();
+    } catch (e) {
+      smartSentry.captureError(e);
+    }
+  }
+
+  async function simulatePay() {
+    if (!payInfo.payOrderId) {
+      return;
+    }
+    try {
+      await payApi.sync(payInfo.payOrderId);
+      payInfo.payStatus = PAY_STATUS_ENUM.SUCCESS.value;
+      stopPoll();
+      message.success('已模拟支付成功');
+      emit('paid');
+      setTimeout(onClose, 800);
     } catch (e) {
       smartSentry.captureError(e);
     }
@@ -141,6 +164,10 @@
     color: #999;
     margin-top: 12px;
     text-align: center;
+  }
+
+  .pay-qrcode-mock-btn {
+    margin-top: 12px;
   }
 
   .pay-qrcode-no {

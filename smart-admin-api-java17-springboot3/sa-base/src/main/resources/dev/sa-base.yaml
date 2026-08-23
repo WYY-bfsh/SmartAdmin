@@ -3,7 +3,7 @@ spring:
   datasource:
     url: jdbc:p6spy:mysql://127.0.0.1:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true&serverTimezone=Asia/Shanghai
     username: root
-    password: SmartAdmin666
+    password: root
     driver-class-name: com.p6spy.engine.spy.P6SpyDriver
     initial-size: 2
     min-idle: 2
@@ -68,8 +68,8 @@ spring:
   # 上传文件和请求大小
   servlet:
     multipart:
-      max-file-size: 20MB # 单个文件的最大大小
-      max-request-size: 10MB # 整个请求的最大大小
+      max-file-size: 200MB # 单个文件的最大大小（媒体中心成片/素材）
+      max-request-size: 200MB # 整个请求的最大大小
 
   # 缓存实现类型
   cache:
@@ -188,16 +188,17 @@ smart:
     db-refresh-interval: 60
 
 # 微信支付 APIv3（Native 扫码）
-# 商户平台：https://pay.weixin.qq.com  证书与密钥：账户中心 -> API安全
-# notify-url 必须是公网 HTTPS，本地调试请用内网穿透
+# mock: true 时使用下面这套演示商户数据，不请求微信，本地即可下单/同步/退款
+# 有真实商户号后把 mock 改成 false，再换成自己的 AppId、商户号、密钥和证书
 wechat:
   pay:
-    enabled: false
-    app-id:
-    mch-id:
-    api-v3-key:
-    merchant-serial-number:
-    # 二选一：商户私钥 PEM 内容，或 apiclient_key.pem 文件路径
-    private-key:
+    enabled: true
+    mock: true
+    app-id: wx8f3a2c1d4e5b6789
+    mch-id: 1639284750
+    api-v3-key: SmartAdminWxPayDemoKey32Chars!!
+    merchant-serial-number: 5A8C2E1B9D4F60783C1A0E6B2D9F4C7A8E1B3D5F
+    # 演示模式占位，不是真实私钥
+    private-key: DEMO_MOCK_PRIVATE_KEY
     private-key-path:
-    notify-url: https://your-domain.com/pay/wechat/notify
+    notify-url: https://demo.smartadmin.local/pay/wechat/notify
