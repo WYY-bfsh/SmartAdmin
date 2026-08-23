@@ -95,6 +95,7 @@ export const homeRouters = [
       { path: '/customer/ticket', name: '501', component: () => import('/@/views/business/customer/ticket/ticket-list.vue'), meta: { title: '工单管理', icon: 'FileProtectOutlined' } },
       { path: '/customer/knowledge', name: '502', component: () => import('/@/views/business/customer/knowledge/knowledge-list.vue'), meta: { title: '知识库', icon: 'BookOutlined' } },
       { path: '/customer/info-query', name: '503', component: () => import('/@/views/business/customer/info-query/info-query.vue'), meta: { title: '信息查询', icon: 'SearchOutlined' } },
+      { path: '/customer/qa', name: '512', component: () => import('/@/views/business/customer/qa/qa-list.vue'), meta: { title: '问答管理', icon: 'QuestionCircleOutlined' } },
     ],
   },
 ];

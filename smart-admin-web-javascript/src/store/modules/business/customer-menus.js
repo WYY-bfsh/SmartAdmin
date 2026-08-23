@@ -55,6 +55,7 @@ function buildCustomerCatalog() {
     page(501, 500, '工单管理', '/customer/ticket', '/business/customer/ticket/ticket-list.vue', 'FileProtectOutlined', true),
     page(502, 500, '知识库', '/customer/knowledge', '/business/customer/knowledge/knowledge-list.vue', 'BookOutlined', true),
     page(503, 500, '信息查询', '/customer/info-query', '/business/customer/info-query/info-query.vue', 'SearchOutlined', false),
+    page(512, 500, '问答管理', '/customer/qa', '/business/customer/qa/qa-list.vue', 'QuestionCircleOutlined', true),
   ]);
 }
 
@@ -72,6 +73,11 @@ function flattenCustomerMenus() {
     { menuId: 509, menuName: '查询知识', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 502, webPerms: 'cs:knowledge:query', visibleFlag: true, disabledFlag: false, deletedFlag: false },
     { menuId: 510, menuName: '编辑知识', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 502, webPerms: 'cs:knowledge:edit', visibleFlag: true, disabledFlag: false, deletedFlag: false },
     { menuId: 511, menuName: '查询信息', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 503, webPerms: 'cs:info:query', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    { menuId: 512, menuName: '问答管理', menuType: MENU_TYPE_ENUM.MENU.value, parentId: 500, sort: 4, path: '/customer/qa', component: '/business/customer/qa/qa-list.vue', icon: 'QuestionCircleOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: true, frameFlag: false },
+    { menuId: 513, menuName: '查询问答', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 512, webPerms: 'cs:qa:query', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    { menuId: 514, menuName: '创建提问', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 512, webPerms: 'cs:qa:ask', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    { menuId: 515, menuName: '回答/驳回', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 512, webPerms: 'cs:qa:answer', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    { menuId: 516, menuName: '删除问答', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 512, webPerms: 'cs:qa:delete', visibleFlag: true, disabledFlag: false, deletedFlag: false },
   ];
 }
 

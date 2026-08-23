@@ -38,6 +38,8 @@ public class AdminSwaggerTagConst extends SwaggerTagConst {
 
         public static final String CUSTOMER_KNOWLEDGE = "客服-知识库";
 
+        public static final String CUSTOMER_QA = "客服-问答管理";
+
     }
 
 

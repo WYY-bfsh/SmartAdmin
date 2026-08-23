@@ -154,3 +154,62 @@ WHERE NOT EXISTS (SELECT 1 FROM `t_cs_knowledge` WHERE `title` = '系统功能�
 INSERT INTO `t_cs_knowledge` (`title`, `category`, `content`, `sort`, `view_count`, `create_user_id`, `deleted_flag`, `create_time`, `update_time`)
 SELECT '微信支付接入流程说明', 3, '<h3>微信支付配置步骤</h3><ol><li>在微信商户平台申请商户号</li><li>配置APIv3密钥和证书</li><li>在系统的"商户配置"页面填写商户信息</li><li>配置支付回调地址</li><li>测试扫码支付功能</li></ol><p>详细配置请参考微信支付官方文档。</p>', 3, 89, 1, 0, DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY)
 WHERE NOT EXISTS (SELECT 1 FROM `t_cs_knowledge` WHERE `title` = '微信支付接入流程说明');
+
+-- ----------------------------
+-- 6. 问答表
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `t_cs_qa` (
+  `qa_id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '问答ID',
+  `question` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '提问内容',
+  `answer` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '回答内容',
+  `status` int(0) NOT NULL DEFAULT 10 COMMENT '状态：10待回答 20已回答 30已驳回',
+  `asker_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '提问人',
+  `asker_phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '提问人电话',
+  `asker_email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '提问人邮箱',
+  `create_user_id` bigint(0) NULL DEFAULT NULL COMMENT '创建人（员工ID）',
+  `answer_user_id` bigint(0) NULL DEFAULT NULL COMMENT '回答人',
+  `answer_time` datetime(0) NULL DEFAULT NULL COMMENT '回答时间',
+  `deleted_flag` tinyint(1) NOT NULL DEFAULT 0 COMMENT '删除状态',
+  `update_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+  `create_time` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`qa_id`) USING BTREE,
+  KEY `idx_status` (`status`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '客服问答' ROW_FORMAT = Dynamic;
+
+-- 菜单：问答管理
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 512, '问答管理', 2, 500, 4, '/customer/qa', '/business/customer/qa/qa-list.vue', NULL, NULL, NULL, 'QuestionCircleOutlined', NULL, 0, NULL, 1, 1, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 512);
+
+-- 功能点：问答查询
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 513, '查询问答', 3, 512, 1, NULL, NULL, 1, 'cs:qa:query', 'cs:qa:query', NULL, 512, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 513);
+
+-- 功能点：提问
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 514, '创建提问', 3, 512, 2, NULL, NULL, 1, 'cs:qa:ask', 'cs:qa:ask', NULL, 512, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 514);
+
+-- 功能点：回答/驳回
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 515, '回答/驳回', 3, 512, 3, NULL, NULL, 1, 'cs:qa:answer', 'cs:qa:answer', NULL, 512, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 515);
+
+-- 功能点：删除问答
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 516, '删除问答', 3, 512, 4, NULL, NULL, 1, 'cs:qa:delete', 'cs:qa:delete', NULL, 512, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 516);
+
+-- 演示问答
+INSERT INTO `t_cs_qa` (`question`, `answer`, `status`, `asker_name`, `asker_phone`, `create_user_id`, `answer_user_id`, `answer_time`, `deleted_flag`, `create_time`, `update_time`)
+SELECT '系统支持哪些支付方式？', '目前系统支持微信支付扫码支付（Native支付），后续将陆续接入支付宝支付和银联支付，敬请期待。', 20, '张三', '13800138001', NULL, 1, DATE_SUB(NOW(), INTERVAL 1 DAY), 0, DATE_SUB(NOW(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY)
+WHERE NOT EXISTS (SELECT 1 FROM `t_cs_qa` WHERE `question` = '系统支持哪些支付方式？');
+
+INSERT INTO `t_cs_qa` (`question`, `answer`, `status`, `asker_name`, `asker_phone`, `create_user_id`, `answer_user_id`, `answer_time`, `deleted_flag`, `create_time`, `update_time`)
+SELECT '数据字典怎么使用？', '数据字典用于统一管理系统中的枚举值。在"系统支撑-数据字典"菜单中，可以添加字典编码和字典项。前端通过 SmartDictSelect 组件即可使用。', 20, '李四', '13800138002', NULL, 1, DATE_SUB(NOW(), INTERVAL 3 HOUR), 0, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_SUB(NOW(), INTERVAL 3 HOUR)
+WHERE NOT EXISTS (SELECT 1 FROM `t_cs_qa` WHERE `question` = '数据字典怎么使用？');
+
+INSERT INTO `t_cs_qa` (`question`, `answer`, `status`, `asker_name`, `asker_phone`, `create_user_id`, `answer_user_id`, `answer_time`, `deleted_flag`, `create_time`, `update_time`)
+SELECT '如何导出报表数据？', NULL, 10, '王五', '13800138003', NULL, NULL, NULL, 0, DATE_SUB(NOW(), INTERVAL 1 HOUR), DATE_SUB(NOW(), INTERVAL 1 HOUR)
+WHERE NOT EXISTS (SELECT 1 FROM `t_cs_qa` WHERE `question` = '如何导出报表数据？');

@@ -36,10 +36,17 @@ export const KNOWLEDGE_CATEGORY_ENUM = {
   OTHER: { value: 4, desc: '其他' },
 };
 
+export const QA_STATUS_ENUM = {
+  WAIT_ANSWER: { value: 10, desc: '待回答' },
+  ANSWERED: { value: 20, desc: '已回答' },
+  REJECTED: { value: 30, desc: '已驳回' },
+};
+
 export default {
   TICKET_TYPE_ENUM,
   TICKET_PRIORITY_ENUM,
   TICKET_STATUS_ENUM,
   TICKET_MESSAGE_TYPE_ENUM,
   KNOWLEDGE_CATEGORY_ENUM,
+  QA_STATUS_ENUM,
 };

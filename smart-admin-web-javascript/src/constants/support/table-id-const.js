@@ -47,6 +47,7 @@ export const TABLE_ID_CONST = {
     CUSTOMER: {
       TICKET: businessCustomerInitTableId + 1,
       KNOWLEDGE: businessCustomerInitTableId + 2,
+      QA: businessCustomerInitTableId + 3,
     },
   },
 
