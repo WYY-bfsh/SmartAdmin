@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.pay.dao.PayOrderDao">
+
+    <select id="query" resultType="net.lab1024.sa.admin.module.business.pay.domain.vo.PayOrderVO">
+        SELECT *
+        FROM t_pay_order
+        <where>
+            <if test="query.orderNo != null and query.orderNo != ''">
+                AND INSTR(order_no, #{query.orderNo})
+            </if>
+            <if test="query.payStatus != null">
+                AND pay_status = #{query.payStatus}
+            </if>
+            <if test="query.createTimeBegin != null">
+                AND create_time &gt;= #{query.createTimeBegin}
+            </if>
+            <if test="query.createTimeEnd != null">
+                AND create_time &lt; DATE_ADD(#{query.createTimeEnd}, INTERVAL 1 DAY)
+            </if>
+            <if test="query.deletedFlag != null">
+                AND deleted_flag = #{query.deletedFlag}
+            </if>
+        </where>
+        <if test="query.sortItemList == null or query.sortItemList.size == 0">
+            ORDER BY pay_order_id DESC
+        </if>
+    </select>
+
+    <select id="selectByOrderNo" resultType="net.lab1024.sa.admin.module.business.pay.domain.entity.PayOrderEntity">
+        SELECT *
+        FROM t_pay_order
+        WHERE order_no = #{orderNo}
+          AND deleted_flag = 0
+        LIMIT 1
+    </select>
+
+</mapper>
