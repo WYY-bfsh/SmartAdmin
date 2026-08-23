@@ -186,3 +186,15 @@ smart:
     db-refresh-enabled: true
     # 数据库配置检测-执行间隔 默认120秒 可选
     db-refresh-interval: 60
+
+# 微信支付 APIv3（Native 扫码）
+wechat:
+  pay:
+    enabled: false
+    app-id:
+    mch-id:
+    api-v3-key:
+    merchant-serial-number:
+    private-key:
+    private-key-path:
+    notify-url: https://your-domain.com/pay/wechat/notify

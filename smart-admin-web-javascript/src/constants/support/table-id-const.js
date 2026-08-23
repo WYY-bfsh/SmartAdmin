@@ -32,6 +32,9 @@ export const TABLE_ID_CONST = {
     ERP: {
       GOODS: businessERPInitTableId + 1, //商品管理
     },
+    PAY: {
+      ORDER: businessERPInitTableId + 11, //微信支付订单
+    },
   },
 
   /**

@@ -26,6 +26,8 @@ public class AdminSwaggerTagConst extends SwaggerTagConst {
 
         public static final String OA_NOTICE = "OA办公-通知公告";
 
+        public static final String PAY_WECHAT = "支付-微信支付";
+
     }
 
 

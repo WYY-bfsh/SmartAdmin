@@ -186,3 +186,18 @@ smart:
     db-refresh-enabled: true
     # 数据库配置检测-执行间隔 默认120秒 可选
     db-refresh-interval: 60
+
+# 微信支付 APIv3（Native 扫码）
+# 商户平台：https://pay.weixin.qq.com  证书与密钥：账户中心 -> API安全
+# notify-url 必须是公网 HTTPS，本地调试请用内网穿透
+wechat:
+  pay:
+    enabled: false
+    app-id:
+    mch-id:
+    api-v3-key:
+    merchant-serial-number:
+    # 二选一：商户私钥 PEM 内容，或 apiclient_key.pem 文件路径
+    private-key:
+    private-key-path:
+    notify-url: https://your-domain.com/pay/wechat/notify
