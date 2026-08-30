@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.mall.dao.MallMemberDao">
+
+    <select id="selectByPhone" resultType="net.lab1024.sa.admin.module.business.mall.domain.entity.MallMemberEntity">
+        SELECT * FROM t_mall_member WHERE phone = #{phone} AND deleted_flag = 0 LIMIT 1
+    </select>
+
+    <select id="selectByInviteCode" resultType="net.lab1024.sa.admin.module.business.mall.domain.entity.MallMemberEntity">
+        SELECT * FROM t_mall_member WHERE invite_code = #{inviteCode} AND deleted_flag = 0 LIMIT 1
+    </select>
+
+</mapper>
