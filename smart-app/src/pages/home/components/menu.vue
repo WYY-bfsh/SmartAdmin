@@ -48,16 +48,16 @@
         </view>
       </uni-grid-item>
       <uni-grid-item class="menu-grid" style="width: 134rpx; height: 134rpx">
-        <view class="menu-item" @click="switchTab('/pages/list/list')">
+        <view class="menu-item" @click="navigateTo('/pages/list/list')">
           <image class="item-image" src="@/static/images/index/ic_home_menu9.png"></image>
           <view class="item-text"> 列表样式1 </view>
         </view>
       </uni-grid-item>
 
       <uni-grid-item class="menu-grid" style="width: 134rpx; height: 134rpx">
-        <view class="menu-item" @click="switchTab('/pages/list2/list')">
+        <view class="menu-item" @click="switchTab('/pages/mall/home')">
           <image class="item-image" src="@/static/images/index/ic_home_menu8.png"></image>
-          <view class="item-text"> 列表样式2 </view>
+          <view class="item-text"> 抢购商城 </view>
         </view>
       </uni-grid-item>
       <uni-grid-item class="menu-grid" style="width: 134rpx; height: 134rpx">

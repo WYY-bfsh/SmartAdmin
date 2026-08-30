@@ -128,7 +128,7 @@
       //更新用户信息到 pinia
       useUserStore().setUserLoginInfo(res.data);
 
-      uni.switchTab({ url: '/pages/home/index' });
+      uni.reLaunch({ url: '/pages/home/index' });
     } catch (e) {
       if (e.data && e.data.code !== 0) {
         loginForm.captchaCode = '';

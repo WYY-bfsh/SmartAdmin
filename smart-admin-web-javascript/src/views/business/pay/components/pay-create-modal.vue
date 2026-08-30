@@ -39,8 +39,19 @@
     amountYuan: [{ required: true, message: '请输入支付金额' }],
   };
 
-  function showModal() {
+  function showModal(preset) {
     Object.assign(form, formDefault);
+    if (preset) {
+      if (preset.description) {
+        form.description = preset.description;
+      }
+      if (preset.amountYuan !== undefined && preset.amountYuan !== null && preset.amountYuan !== '') {
+        form.amountYuan = Number(preset.amountYuan);
+      }
+      if (preset.remark) {
+        form.remark = preset.remark;
+      }
+    }
     visible.value = true;
   }
 
@@ -55,7 +66,7 @@
         SmartLoading.show();
         try {
           const res = await payApi.create(form);
-          message.success('已生成收款码，请使用微信扫码支付');
+          message.success(res.data?.mock ? '已生成演示收款码。当前没有真实微信商户，请点「模拟支付成功」完成本次流程' : '已生成收款码，请使用微信扫码支付');
           visible.value = false;
           emit('reloadList');
           emit('showQrcode', res.data);

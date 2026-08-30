@@ -81,7 +81,7 @@
       return;
     }
     try {
-      await payApi.sync(payInfo.payOrderId);
+      await payApi.mockPay(payInfo.payOrderId);
       payInfo.payStatus = PAY_STATUS_ENUM.SUCCESS.value;
       stopPoll();
       message.success('已模拟支付成功');

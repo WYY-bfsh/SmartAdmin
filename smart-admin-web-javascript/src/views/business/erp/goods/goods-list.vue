@@ -132,6 +132,7 @@
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
             <a-button @click="addGoods(record)" type="link" v-privilege="'goods:update'">编辑</a-button>
+            <a-button @click="goToPay(record)" type="link" v-privilege="'pay:order:create'">收款</a-button>
             <a-button @click="deleteGoods(record)" danger type="link" v-privilege="'goods:delete'">删除</a-button>
           </div>
         </template>
@@ -187,6 +188,7 @@
 <script setup>
   import GoodsFormModal from './components/goods-form-modal.vue';
   import { onMounted, reactive, ref } from 'vue';
+  import { useRouter } from 'vue-router';
   import { message, Modal } from 'ant-design-vue';
   import { SmartLoading } from '/@/components/framework/smart-loading';
   import { goodsApi } from '/@/api/business/goods/goods-api';
@@ -279,7 +281,7 @@
       dataIndex: 'action',
       resizable: true,
       fixed: 'right',
-      width: 100,
+      width: 160,
     },
   ]);
 
@@ -347,8 +349,24 @@
   // ---------------------------- 添加/修改 ----------------------------
   const formModal = ref();
 
+  const router = useRouter();
+
   function addGoods(goodsData) {
     formModal.value.showDrawer(goodsData);
+  }
+
+  function goToPay(record) {
+    if (record.price === undefined || record.price === null || Number(record.price) <= 0) {
+      message.warning('请先给商品填写价格');
+      return;
+    }
+    router.push({
+      path: '/pay/order',
+      query: {
+        description: record.goodsName,
+        amountYuan: String(record.price),
+      },
+    });
   }
   // ---------------------------- 单个删除 ----------------------------
 

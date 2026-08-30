@@ -19,6 +19,9 @@ export const payApi = {
   qrcode: (payOrderId) => {
     return getRequest(`/pay/order/qrcode/${payOrderId}`);
   },
+  mockPay: (payOrderId) => {
+    return postRequest(`/pay/order/mock-pay/${payOrderId}`);
+  },
   sync: (payOrderId) => {
     return getRequest(`/pay/order/sync/${payOrderId}`);
   },

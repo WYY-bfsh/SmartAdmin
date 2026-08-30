@@ -61,6 +61,9 @@ public class PayOrderService {
     @Resource
     private WeChatPayClient weChatPayClient;
 
+    @Resource
+    private PaySchemaService paySchemaService;
+
     public ResponseDTO<WeChatPayConfigVO> getConfig() {
         WeChatPayConfigVO vo = new WeChatPayConfigVO();
         vo.setEnabled(weChatPayClient.isEnabled());
@@ -76,6 +79,7 @@ public class PayOrderService {
     }
 
     public ResponseDTO<PageResult<PayOrderVO>> query(PayOrderQueryForm queryForm) {
+        paySchemaService.ensureTables();
         seedDemoOrdersIfNeeded();
         queryForm.setDeletedFlag(false);
         Page<?> page = SmartPageUtil.convert2PageQuery(queryForm);
@@ -99,6 +103,7 @@ public class PayOrderService {
 
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<PayCreateVO> create(PayOrderCreateForm createForm) {
+        paySchemaService.ensureTables();
         int amountFen = yuanToFen(createForm.getAmountYuan());
         String orderNo = generateOrderNo();
 
@@ -155,6 +160,22 @@ public class PayOrderService {
         vo.setQrcodeBase64(toQrcodeBase64(entity.getCodeUrl()));
         vo.setPayStatus(entity.getPayStatus());
         vo.setMock(weChatPayClient.isMock());
+        return ResponseDTO.ok(vo);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseDTO<PayOrderVO> mockPay(Long payOrderId) {
+        if (!weChatPayClient.isMock()) {
+            return ResponseDTO.userErrorParam("仅演示模式支持模拟支付，正式商户请用微信扫码");
+        }
+        PayOrderEntity entity = requireOrder(payOrderId);
+        if (!PayStatusEnum.WAIT_PAY.equalsValue(entity.getPayStatus())) {
+            return ResponseDTO.userErrorParam("当前订单不是待支付状态");
+        }
+        mockPaySuccess(entity);
+        payOrderDao.updateById(entity);
+        PayOrderVO vo = SmartBeanUtil.copy(entity, PayOrderVO.class);
+        fillAmountYuan(vo);
         return ResponseDTO.ok(vo);
     }
 
@@ -316,6 +337,7 @@ public class PayOrderService {
     }
 
     private PayOrderEntity requireOrder(Long payOrderId) {
+        paySchemaService.ensureTables();
         PayOrderEntity entity = payOrderDao.selectById(payOrderId);
         if (entity == null || Boolean.TRUE.equals(entity.getDeletedFlag())) {
             throw new BusinessException("支付订单不存在");

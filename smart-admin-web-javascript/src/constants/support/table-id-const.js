@@ -18,6 +18,7 @@ let businessOAInitTableId = 30000;
 let businessERPInitTableId = 40000;
 let businessMediaInitTableId = 50000;
 let businessCustomerInitTableId = 60000;
+let businessMallInitTableId = 70000;
 
 export const TABLE_ID_CONST = {
   /**
@@ -48,6 +49,12 @@ export const TABLE_ID_CONST = {
       TICKET: businessCustomerInitTableId + 1,
       KNOWLEDGE: businessCustomerInitTableId + 2,
       QA: businessCustomerInitTableId + 3,
+    },
+    MALL: {
+      ACTIVITY: businessMallInitTableId + 1,
+      ORDER: businessMallInitTableId + 2,
+      MEMBER: businessMallInitTableId + 3,
+      COMMISSION: businessMallInitTableId + 4,
     },
   },
 

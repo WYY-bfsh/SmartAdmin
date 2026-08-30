@@ -17,3 +17,5 @@ const KEY_PREFIX = 'smart_h5_';
  */
 // token
 export const USER_TOKEN = `${KEY_PREFIX}token`;
+export const MALL_TOKEN = `${KEY_PREFIX}mall_token`;
+export const MALL_INVITE = `${KEY_PREFIX}mall_invite`;

@@ -70,6 +70,14 @@ public class PayOrderController {
         return payOrderService.qrcode(payOrderId);
     }
 
+    @Operation(summary = "演示模式模拟支付成功")
+    @PostMapping("/pay/order/mock-pay/{payOrderId}")
+    @SaCheckPermission("pay:order:sync")
+    @RepeatSubmit
+    public ResponseDTO<PayOrderVO> mockPay(@PathVariable Long payOrderId) {
+        return payOrderService.mockPay(payOrderId);
+    }
+
     @Operation(summary = "同步微信支付状态")
     @GetMapping("/pay/order/sync/{payOrderId}")
     @SaCheckPermission("pay:order:sync")

@@ -360,6 +360,10 @@
                 <includes>
                     <include>*.*</include>
                 </includes>
+                <excludes>
+                    <exclude>*.yaml</exclude>
+                    <exclude>*.yml</exclude>
+                </excludes>
             </resource>
         </resources>
 

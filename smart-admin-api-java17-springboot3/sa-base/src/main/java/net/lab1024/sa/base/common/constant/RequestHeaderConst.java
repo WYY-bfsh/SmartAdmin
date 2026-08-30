@@ -13,6 +13,8 @@ public class RequestHeaderConst {
 
     public static final String TOKEN = "Authorization";
 
+    public static final String MALL_TOKEN = "Mall-Token";
+
     public static final String USER_AGENT = "user-agent";
 
 }

@@ -1,8 +1,8 @@
 spring:
   # 数据库连接信息
   datasource:
-    url: jdbc:p6spy:mysql://127.0.0.1:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true&serverTimezone=Asia/Shanghai
-    username: root
+    url: jdbc:p6spy:mysql://175.27.131.7:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true&serverTimezone=Asia/Shanghai
+    username: smart_admin_v3
     password: root
     driver-class-name: com.p6spy.engine.spy.P6SpyDriver
     initial-size: 2
@@ -24,9 +24,9 @@ spring:
   data:
     redis:
       database: 1
-      host: 127.0.0.1
+      host: 175.27.131.7
       port: 6379
-      password:
+      password: 123456
       timeout: 10000ms
       lettuce:
         pool:
@@ -202,3 +202,15 @@ wechat:
     private-key: DEMO_MOCK_PRIVATE_KEY
     private-key-path:
     notify-url: https://demo.smartadmin.local/pay/wechat/notify
+
+# 秒杀商城（正规卖货：秒杀 + 一级分销 + 真实发货）
+mall:
+  seckill:
+    # 预计同时抢购人数，先待定，可随时改。超过该人数会提示稍后再试（不超卖）
+    concurrent-limit: 200
+    pay-timeout-minutes: 15
+    default-commission-rate: 0.05
+  express:
+    # 快递100 实时查询。customer + key 都填了就查真轨迹；否则按发货时间生成与快递100同结构的演示轨迹
+    kuaidi100-key:
+    kuaidi100-customer:

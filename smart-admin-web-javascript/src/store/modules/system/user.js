@@ -17,6 +17,7 @@ import { smartSentry } from '/@/lib/smart-sentry';
 import { localRead, localSave, localRemove } from '/@/utils/local-util';
 import { ensureMediaMenus, prependMediaMenuTree } from '/@/store/modules/business/media-menus';
 import { ensureCustomerMenus, prependCustomerMenuTree } from '/@/store/modules/business/customer-menus';
+import { ensureMallMenus, prependMallMenuTree } from '/@/store/modules/business/mall-menus';
 
 
 export const useUserStore = defineStore({
@@ -84,7 +85,7 @@ export const useUserStore = defineStore({
     },
     //菜单树
     getMenuTree(state) {
-      return prependCustomerMenuTree(prependMediaMenuTree(prependPayMenuTree(state.menuTree)));
+      return prependMallMenuTree(prependCustomerMenuTree(prependMediaMenuTree(prependPayMenuTree(state.menuTree))));
     },
     //菜单的路由
     getMenuRouterList(state) {
@@ -169,7 +170,7 @@ export const useUserStore = defineStore({
       this.lastLoginTime = data.lastLoginTime;
 
       //菜单权限（库里还没有支付菜单时，前端补一套，保证侧栏能看到）
-      data.menuList = ensureCustomerMenus(ensureMediaMenus(ensurePayMenus(data.menuList)));
+      data.menuList = ensureMallMenus(ensureCustomerMenus(ensureMediaMenus(ensurePayMenus(data.menuList))));
 
       //菜单权限
       this.menuTree = buildMenuTree(data.menuList);
@@ -390,6 +391,7 @@ function prependPayMenuTree(menuTree) {
 
 export { ensureMediaMenus } from '/@/store/modules/business/media-menus';
 export { ensureCustomerMenus } from '/@/store/modules/business/customer-menus';
+export { ensureMallMenus } from '/@/store/modules/business/mall-menus';
 
 /**
  * 后端未写入支付菜单时，前端补齐目录/页面/按钮权限

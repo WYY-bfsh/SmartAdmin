@@ -96,6 +96,10 @@ export const homeRouters = [
       { path: '/customer/knowledge', name: '502', component: () => import('/@/views/business/customer/knowledge/knowledge-list.vue'), meta: { title: '知识库', icon: 'BookOutlined' } },
       { path: '/customer/info-query', name: '503', component: () => import('/@/views/business/customer/info-query/info-query.vue'), meta: { title: '信息查询', icon: 'SearchOutlined' } },
       { path: '/customer/qa', name: '512', component: () => import('/@/views/business/customer/qa/qa-list.vue'), meta: { title: '问答管理', icon: 'QuestionCircleOutlined' } },
+      { path: '/mall-admin/activity', name: '601', component: () => import('/@/views/business/mall/admin/activity-list.vue'), meta: { title: '秒杀活动' } },
+      { path: '/mall-admin/order', name: '602', component: () => import('/@/views/business/mall/admin/order-list.vue'), meta: { title: '商城订单' } },
+      { path: '/mall-admin/member', name: '603', component: () => import('/@/views/business/mall/admin/member-list.vue'), meta: { title: '会员' } },
+      { path: '/mall-admin/commission', name: '604', component: () => import('/@/views/business/mall/admin/commission-list.vue'), meta: { title: '分销佣金' } },
     ],
   },
 ];

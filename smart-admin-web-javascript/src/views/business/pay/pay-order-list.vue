@@ -33,9 +33,16 @@
   </a-form>
 
   <a-card size="small" :bordered="false" :hoverable="true">
+    <a-alert
+      v-if="mockMode"
+      type="warning"
+      show-icon
+      class="smart-margin-bottom10"
+      message="当前是微信支付演示模式：没有真实商户号，扫码不会向微信收款。创建订单后点「模拟支付」即可走完支付和退款流程。"
+    />
     <a-row class="smart-table-btn-block">
       <div class="smart-table-operate-block">
-        <a-button type="primary" @click="showCreate" v-privilege="'pay:order:create'">
+        <a-button type="primary" @click="showCreate()" v-privilege="'pay:order:create'">
           <template #icon>
             <PlusOutlined />
           </template>
@@ -74,6 +81,14 @@
           <div class="smart-table-operate">
             <a-button type="link" v-if="record.payOrderId > 0 && record.payStatus === PAY_STATUS_ENUM.WAIT_PAY.value" @click="showQrcode(record)" v-privilege="'pay:order:query'">
               二维码
+            </a-button>
+            <a-button
+              type="link"
+              v-if="mockMode && record.payOrderId > 0 && record.payStatus === PAY_STATUS_ENUM.WAIT_PAY.value"
+              @click="mockPay(record)"
+              v-privilege="'pay:order:sync'"
+            >
+              模拟支付
             </a-button>
             <a-button type="link" v-if="record.payOrderId > 0" @click="syncStatus(record)" v-privilege="'pay:order:sync'">同步</a-button>
             <a-button
@@ -120,6 +135,7 @@
 
 <script setup>
   import { onMounted, reactive, ref } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
   import { Modal, message } from 'ant-design-vue';
   import { PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons-vue';
   import { payApi } from '/@/api/business/pay/pay-api';
@@ -143,7 +159,7 @@
     { title: '微信单号', dataIndex: 'transactionId', width: 220, ellipsis: true },
     { title: '已退款', dataIndex: 'refundAmountYuan', width: 100 },
     { title: '创建时间', dataIndex: 'createTime', width: 170 },
-    { title: '操作', dataIndex: 'action', fixed: 'right', width: 220 },
+    { title: '操作', dataIndex: 'action', fixed: 'right', width: 280 },
   ]);
 
   const queryFormState = {
@@ -162,6 +178,9 @@
   const createModalRef = ref();
   const qrcodeModalRef = ref();
   const refundModalRef = ref();
+  const mockMode = ref(true);
+  const route = useRoute();
+  const router = useRouter();
 
   function statusColor(status) {
     const map = {
@@ -281,8 +300,31 @@
     }
   }
 
-  function showCreate() {
-    createModalRef.value.showModal();
+  async function loadConfig() {
+    try {
+      const res = await payApi.getConfig();
+      mockMode.value = res.data?.mock !== false;
+    } catch (e) {
+      mockMode.value = true;
+      smartSentry.captureError(e);
+    }
+  }
+
+  function showCreate(preset) {
+    createModalRef.value.showModal(preset);
+  }
+
+  async function mockPay(record) {
+    try {
+      SmartLoading.show();
+      await payApi.mockPay(record.payOrderId);
+      message.success('已模拟支付成功');
+      queryData();
+    } catch (e) {
+      smartSentry.captureError(e);
+    } finally {
+      SmartLoading.hide();
+    }
   }
 
   function onCreated(payData) {
@@ -332,5 +374,18 @@
     });
   }
 
-  onMounted(queryData);
+  onMounted(async () => {
+    await loadConfig();
+    await queryData();
+    const description = route.query.description;
+    const amountYuan = route.query.amountYuan;
+    if (description || amountYuan) {
+      showCreate({
+        description,
+        amountYuan,
+        remark: route.query.remark,
+      });
+      router.replace({ path: '/pay/order' });
+    }
+  });
 </script>
