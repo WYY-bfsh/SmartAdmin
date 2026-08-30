@@ -24,12 +24,10 @@
 
 <script setup>
   import { onLoad } from '@dcloudio/uni-app';
-  import { MALL_INVITE } from '@/constants/local-storage-key-const';
+  import { captureMallInvite } from '@/utils/mall-invite';
 
   onLoad((options) => {
-    if (options && options.invite) {
-      uni.setStorageSync(MALL_INVITE, options.invite);
-    }
+    captureMallInvite(options);
   });
 
   function openArticle(id) {

@@ -34,6 +34,9 @@ export function ensureMallMenus(menuList) {
   const list = Array.isArray(menuList) ? [...menuList] : [];
   const exists = list.some((e) => e.menuId === 600 || e.component === '/business/mall/admin/activity-list.vue');
   if (exists) {
+    if (!list.some((e) => e.menuId === 617)) {
+      list.push(point(617, 603, '维护会员', 'mall:member:save'));
+    }
     return list;
   }
   return list.concat([
@@ -47,6 +50,7 @@ export function ensureMallMenus(menuList) {
     point(613, 602, '查询订单', 'mall:order:query'),
     point(614, 602, '发货', 'mall:order:ship'),
     point(615, 603, '查询会员', 'mall:member:query'),
+    point(617, 603, '维护会员', 'mall:member:save'),
     point(616, 604, '查询佣金', 'mall:commission:query'),
   ]);
 }

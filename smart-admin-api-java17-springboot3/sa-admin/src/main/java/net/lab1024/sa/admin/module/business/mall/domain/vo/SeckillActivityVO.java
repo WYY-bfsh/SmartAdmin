@@ -23,6 +23,7 @@ public class SeckillActivityVO {
     private LocalDateTime endTime;
     private Integer concurrentLimit;
     private BigDecimal commissionRate;
+    private BigDecimal commissionRateL2;
     private Boolean enabledFlag;
 
     @Schema(description = "10未开始 20进行中 30已结束")

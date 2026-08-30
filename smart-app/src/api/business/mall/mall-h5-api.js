@@ -3,7 +3,8 @@ import { MALL_TOKEN } from '@/constants/local-storage-key-const';
 function resolveBase() {
   const envUrl = import.meta.env.VITE_APP_API_URL || 'http://127.0.0.1:1024';
   // #ifdef H5
-  if (typeof window !== 'undefined') {
+  // 仅本地开发时，手机访问局域网 IP 才改打同机 1024；线上用 .env.production
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host && host !== 'localhost' && host !== '127.0.0.1') {
       return `http://${host}:1024`;
@@ -25,6 +26,33 @@ export function saveMallToken(token) {
 
 export function clearMallToken() {
   uni.removeStorageSync(MALL_TOKEN);
+}
+
+export function resolveMallFileUrl(url) {
+  if (!url) {
+    return '';
+  }
+  if (url.startsWith('data:') || url.startsWith('blob:')) {
+    return url;
+  }
+  const base = resolveBase();
+  try {
+    const parsed = new URL(url);
+    const idx = parsed.pathname.indexOf('/upload/');
+    if (idx >= 0 && typeof window !== 'undefined') {
+      return `${window.location.origin}${parsed.pathname.substring(idx)}`;
+    }
+    const baseUrl = new URL(base);
+    if (parsed.hostname !== baseUrl.hostname) {
+      parsed.hostname = baseUrl.hostname;
+      parsed.port = baseUrl.port;
+      parsed.protocol = baseUrl.protocol;
+    }
+    return parsed.toString();
+  } catch (e) {
+    const path = String(url).replace(/^\//, '');
+    return `${base}${path.startsWith('upload/') ? '/' : '/upload/'}${path}`;
+  }
 }
 
 function hintForCode(res) {
@@ -73,8 +101,98 @@ function mallRequest(url, method, data) {
   });
 }
 
+function handleUploadResult(raw, resolve, reject) {
+  let res = {};
+  try {
+    res = typeof raw === 'object' && raw ? raw : JSON.parse(String(raw || '{}').replace('\uFEFF', ''));
+  } catch (e) {
+    uni.showToast({ title: '图片上传失败', icon: 'none' });
+    reject(e);
+    return;
+  }
+  if (res.code && res.code !== 1) {
+    uni.showToast({ title: hintForCode(res), icon: 'none' });
+    reject(res);
+    return;
+  }
+  resolve(res);
+}
+
+async function pathToH5File(filePath) {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  if (!filePath || !(filePath.startsWith('blob:') || filePath.startsWith('data:') || filePath.startsWith('http'))) {
+    return null;
+  }
+  const res = await fetch(filePath);
+  const blob = await res.blob();
+  let ext = 'jpg';
+  if (blob.type && blob.type.includes('/')) {
+    ext = blob.type.split('/')[1].replace('jpeg', 'jpg');
+  }
+  const type = blob.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
+  return new File([blob], `qrcode.${ext}`, { type });
+}
+
+function mallUpload(url, filePath) {
+  return new Promise((resolve, reject) => {
+    const uploadUrl = resolveBase() + url;
+    // #ifdef H5
+    pathToH5File(filePath)
+      .then((file) => {
+        if (!file) {
+          return Promise.reject(new Error('no-h5-file'));
+        }
+        const formData = new FormData();
+        formData.append('file', file, file.name);
+        return fetch(uploadUrl, {
+          method: 'POST',
+          headers: {
+            'Mall-Token': getMallToken(),
+          },
+          body: formData,
+        }).then((response) => response.json());
+      })
+      .then((res) => handleUploadResult(res, resolve, reject))
+      .catch((e) => {
+        if (e && e.message === 'no-h5-file') {
+          nativeUpload(uploadUrl, filePath, resolve, reject);
+          return;
+        }
+        uni.showToast({ title: (e && e.msg) || '图片上传失败', icon: 'none' });
+        reject(e);
+      });
+    return;
+    // #endif
+    nativeUpload(uploadUrl, filePath, resolve, reject);
+  });
+}
+
+function nativeUpload(uploadUrl, filePath, resolve, reject) {
+  uni.uploadFile({
+    url: uploadUrl,
+    filePath,
+    name: 'file',
+    header: {
+      'Mall-Token': getMallToken(),
+    },
+    success: (response) => {
+      handleUploadResult(response.data, resolve, reject);
+    },
+    fail: () => {
+      uni.showToast({
+        title: '图片上传失败，请确认后端 1024 可访问',
+        icon: 'none',
+      });
+      reject(new Error('network'));
+    },
+  });
+}
+
 export const mallH5Api = {
   config: () => mallRequest('/mall/h5/config', 'GET'),
+  uploadAvatar: (filePath) => mallUpload('/mall/h5/avatar/upload', filePath),
   register: (data) => mallRequest('/mall/h5/register', 'POST', data),
   login: (data) => mallRequest('/mall/h5/login', 'POST', data),
   me: () => mallRequest('/mall/h5/me', 'GET'),

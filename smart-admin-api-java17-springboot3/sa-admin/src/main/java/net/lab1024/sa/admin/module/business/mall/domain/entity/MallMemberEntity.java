@@ -26,6 +26,10 @@ public class MallMemberEntity {
 
     private String avatar;
 
+    private String wechatPayQr;
+
+    private String wechatReceiveQr;
+
     private Boolean deletedFlag;
 
     private LocalDateTime updateTime;

@@ -17,6 +17,7 @@ public class MallCommissionVO {
     private String orderNo;
     private BigDecimal amount;
     private BigDecimal rate;
+    private Integer commissionLevel;
     private Integer status;
     private LocalDateTime settleTime;
     private LocalDateTime createTime;

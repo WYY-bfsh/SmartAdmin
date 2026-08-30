@@ -24,6 +24,7 @@ import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
+import net.lab1024.sa.base.module.support.file.domain.vo.FileUploadVO;
 import net.lab1024.sa.base.module.support.repeatsubmit.annoation.RepeatSubmit;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -52,6 +54,12 @@ public class MallH5Controller {
     @GetMapping("/mall/h5/config")
     public ResponseDTO<MallConfigVO> config() {
         return ResponseDTO.ok(seckillActivityService.config());
+    }
+
+    @NoNeedLogin
+    @PostMapping("/mall/h5/avatar/upload")
+    public ResponseDTO<FileUploadVO> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        return mallMemberService.uploadAvatar(file);
     }
 
     @NoNeedLogin

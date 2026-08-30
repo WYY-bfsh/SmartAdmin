@@ -45,6 +45,13 @@
 			}
 		},
 		{
+			"path": "pages/mall/register",
+			"style": {
+				"navigationBarTitleText": "注册",
+				"navigationBarBackgroundColor": "#fff"
+			}
+		},
+		{
 			"path": "pages/mall/detail",
 			"style": {
 				"navigationBarTitleText": "商品详情",

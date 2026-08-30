@@ -25,15 +25,13 @@
   import { ref } from 'vue';
   import { onShow, onLoad } from '@dcloudio/uni-app';
   import { mallH5Api } from '@/api/business/mall/mall-h5-api';
-  import { MALL_INVITE } from '@/constants/local-storage-key-const';
+  import { captureMallInvite } from '@/utils/mall-invite';
 
   const list = ref([]);
   const apiHint = ref('');
 
   onLoad((options) => {
-    if (options && options.invite) {
-      uni.setStorageSync(MALL_INVITE, options.invite);
-    }
+    captureMallInvite(options);
   });
 
   async function load() {

@@ -72,7 +72,15 @@
   const tableLoading = ref(false);
   const visible = ref(false);
   const form = reactive({});
-  const configTip = ref('用户端 H5：http://localhost:5173/ ；演示买家 13800000002 / 123456');
+  function h5BaseUrl() {
+    const host = location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:5173/';
+    }
+    return `${location.protocol}//${host}/`;
+  }
+
+  const configTip = ref(`用户端 H5：${h5BaseUrl()} ；演示买家 13800000002 / 123456`);
 
   async function queryData() {
     tableLoading.value = true;
@@ -104,13 +112,12 @@
     }
   }
   function openH5() {
-    const host = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? 'localhost' : location.hostname;
-    window.open(`http://${host}:5173/`, '_blank');
+    window.open(h5BaseUrl(), '_blank');
   }
   onMounted(async () => {
     try {
       const res = await mallAdminApi.config();
-      configTip.value = `同时抢购人数上限 ${res.data.concurrentLimit}（待定可改 yaml）。支付超时 ${res.data.payTimeoutMinutes} 分钟。一级分销 ${res.data.defaultCommissionRate}。快递100 ${res.data.kuaidi100Enabled ? '已配置真查询' : '未配置，发货后按演示轨迹推进'}。H5：http://localhost:5173/  买家 13800000002 / 123456`;
+      configTip.value = `同时抢购人数上限 ${res.data.concurrentLimit}（待定可改 yaml）。支付超时 ${res.data.payTimeoutMinutes} 分钟。一级分销 ${res.data.defaultCommissionRate}。快递100 ${res.data.kuaidi100Enabled ? '已配置真查询' : '未配置，发货后按演示轨迹推进'}。H5：${h5BaseUrl()}  买家 13800000002 / 123456`;
     } catch (e) {
       smartSentry.captureError(e);
     }

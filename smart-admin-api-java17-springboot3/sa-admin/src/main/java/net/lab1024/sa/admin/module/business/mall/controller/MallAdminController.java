@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import net.lab1024.sa.admin.constant.AdminSwaggerTagConst;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallCommissionQueryForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallMemberQueryForm;
+import net.lab1024.sa.admin.module.business.mall.domain.form.MallMemberUpdateForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallOrderQueryForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallShipForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.SeckillActivityForm;
@@ -100,6 +101,13 @@ public class MallAdminController {
     @SaCheckPermission("mall:member:query")
     public ResponseDTO<PageResult<MallMemberVO>> memberQuery(@RequestBody @Valid MallMemberQueryForm queryForm) {
         return mallMemberService.queryMembers(queryForm);
+    }
+
+    @PostMapping("/mall/admin/member/update")
+    @SaCheckPermission("mall:member:query")
+    @RepeatSubmit
+    public ResponseDTO<String> memberUpdate(@RequestBody @Valid MallMemberUpdateForm form) {
+        return mallMemberService.updateMember(form);
     }
 
     @PostMapping("/mall/admin/commission/query")

@@ -35,6 +35,8 @@ public class MallSchemaService {
                           `invite_code` varchar(16) NOT NULL,
                           `parent_member_id` bigint DEFAULT NULL,
                           `avatar` varchar(512) DEFAULT NULL,
+                          `wechat_pay_qr` varchar(512) DEFAULT NULL COMMENT '微信支付码',
+                          `wechat_receive_qr` varchar(512) DEFAULT NULL COMMENT '微信收款码',
                           `deleted_flag` tinyint(1) NOT NULL DEFAULT 0,
                           `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                           `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -147,13 +149,33 @@ public class MallSchemaService {
                           PRIMARY KEY (`commission_id`),
                           UNIQUE KEY `uk_order` (`order_id`),
                           KEY `idx_member` (`member_id`)
-                        ) COMMENT='一级分销佣金'
+                        )                         COMMENT='一级分销佣金'
                         """);
+                addColumnIfMissing(conn, "t_mall_member", "wechat_pay_qr", "varchar(512) DEFAULT NULL COMMENT '微信支付码'");
+                addColumnIfMissing(conn, "t_mall_member", "wechat_receive_qr", "varchar(512) DEFAULT NULL COMMENT '微信收款码'");
                 ready = true;
                 log.info("秒杀商城数据表已就绪");
             } catch (Exception e) {
                 throw new IllegalStateException("自动创建秒杀商城表失败：" + e.getMessage(), e);
             }
+        }
+    }
+
+    private void addColumnIfMissing(Connection conn, String table, String column, String ddl) {
+        try (Statement query = conn.createStatement();
+             var rs = query.executeQuery("SHOW COLUMNS FROM `" + table + "` LIKE '" + column + "'")) {
+            if (rs.next()) {
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("检查表字段失败 {}.{}: {}", table, column, e.getMessage());
+            return;
+        }
+        try (Statement alter = conn.createStatement()) {
+            alter.execute("ALTER TABLE `" + table + "` ADD COLUMN `" + column + "` " + ddl);
+            log.info("已为 {}.{} 增加字段", table, column);
+        } catch (Exception e) {
+            log.warn("增加表字段失败 {}.{}: {}", table, column, e.getMessage());
         }
     }
 }

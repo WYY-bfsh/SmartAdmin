@@ -21,4 +21,16 @@ public class MallRegisterForm {
 
     @Schema(description = "邀请码")
     private String inviteCode;
+
+    @Schema(description = "头像地址")
+    @Length(max = 512, message = "头像地址过长")
+    private String avatar;
+
+    @Schema(description = "微信支付码")
+    @Length(max = 512, message = "微信支付码地址过长")
+    private String wechatPayQr;
+
+    @Schema(description = "支付宝收款码")
+    @Length(max = 512, message = "支付宝收款码地址过长")
+    private String wechatReceiveQr;
 }

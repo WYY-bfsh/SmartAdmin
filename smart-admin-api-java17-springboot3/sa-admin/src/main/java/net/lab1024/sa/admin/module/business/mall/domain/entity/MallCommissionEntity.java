@@ -27,6 +27,11 @@ public class MallCommissionEntity {
 
     private BigDecimal rate;
 
+    /**
+     * 1 一级直推  2 二级粉丝
+     */
+    private Integer commissionLevel;
+
     private Integer status;
 
     private LocalDateTime settleTime;

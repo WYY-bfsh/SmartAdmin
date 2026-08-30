@@ -100,7 +100,7 @@ file:
     mode: local
     local:
       upload-path: /home/smart_admin_v3/upload/   #文件上传目录
-      url-prefix:
+      url-prefix: http://175.27.131.7/upload/
     cloud:
       region: oss-cn-hangzhou
       endpoint: https://oss-cn-hangzhou.aliyuncs.com
@@ -203,13 +203,16 @@ wechat:
     private-key-path:
     notify-url: https://demo.smartadmin.local/pay/wechat/notify
 
-# 秒杀商城（正规卖货：秒杀 + 一级分销 + 真实发货）
+# 秒杀商城（正规卖货：秒杀 + 两级分销 + 真实发货）
 mall:
   seckill:
     # 预计同时抢购人数，先待定，可随时改。超过该人数会提示稍后再试（不超卖）
     concurrent-limit: 200
     pay-timeout-minutes: 15
+    # 一级分销默认比例：直推下级消费。0.05 = 5%
     default-commission-rate: 0.05
+    # 二级分销默认比例：粉丝（下级的下级）消费。千3 = 0.003
+    default-commission-rate-l2: 0.003
   express:
     # 快递100 实时查询。customer + key 都填了就查真轨迹；否则按发货时间生成与快递100同结构的演示轨迹
     kuaidi100-key:

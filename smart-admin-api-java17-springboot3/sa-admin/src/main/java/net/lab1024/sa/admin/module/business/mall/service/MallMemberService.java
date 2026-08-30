@@ -3,6 +3,7 @@ package net.lab1024.sa.admin.module.business.mall.service;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +17,7 @@ import net.lab1024.sa.admin.module.business.mall.domain.entity.MallMemberEntity;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallAddressForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallLoginForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallMemberQueryForm;
+import net.lab1024.sa.admin.module.business.mall.domain.form.MallMemberUpdateForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallRegisterForm;
 import net.lab1024.sa.admin.module.business.mall.domain.vo.MallAddressVO;
 import net.lab1024.sa.admin.module.business.mall.domain.vo.MallMemberVO;
@@ -25,12 +27,20 @@ import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.common.util.SmartPageUtil;
+import net.lab1024.sa.base.module.support.file.constant.FileFolderTypeEnum;
+import net.lab1024.sa.base.module.support.file.domain.vo.FileUploadVO;
+import net.lab1024.sa.base.module.support.file.service.FileService;
 import net.lab1024.sa.base.module.support.redis.RedisService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -60,8 +70,77 @@ public class MallMemberService {
     @Resource
     private RedisService redisService;
 
+    @Resource
+    private FileService fileService;
+
     public void ensureReady() {
         mallSchemaService.ensureTables();
+    }
+
+    public ResponseDTO<FileUploadVO> uploadAvatar(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return ResponseDTO.userErrorParam("请选择图片");
+        }
+        String name = StringUtils.defaultString(file.getOriginalFilename()).toLowerCase();
+        String contentType = StringUtils.defaultString(file.getContentType()).toLowerCase();
+        boolean imageName = name.matches(".*\\.(png|jpe?g|gif|webp|bmp)$");
+        // H5 选图经常没有扩展名，或 content-type 为 octet-stream
+        if (!imageName) {
+            String ext = "jpg";
+            if (contentType.contains("png")) {
+                ext = "png";
+            } else if (contentType.contains("gif")) {
+                ext = "gif";
+            } else if (contentType.contains("webp")) {
+                ext = "webp";
+            }
+            file = withFileName(file, "image." + ext);
+        }
+        return fileService.fileUpload(file, FileFolderTypeEnum.MEDIA.getValue(), null);
+    }
+
+    private static MultipartFile withFileName(MultipartFile file, String filename) {
+        return new MultipartFile() {
+            @Override
+            public String getName() {
+                return file.getName();
+            }
+
+            @Override
+            public String getOriginalFilename() {
+                return filename;
+            }
+
+            @Override
+            public String getContentType() {
+                return file.getContentType();
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return file.isEmpty();
+            }
+
+            @Override
+            public long getSize() {
+                return file.getSize();
+            }
+
+            @Override
+            public byte[] getBytes() throws IOException {
+                return file.getBytes();
+            }
+
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return file.getInputStream();
+            }
+
+            @Override
+            public void transferTo(File dest) throws IOException, IllegalStateException {
+                file.transferTo(dest);
+            }
+        };
     }
 
     public ResponseDTO<MallMemberVO> register(MallRegisterForm form) {
@@ -80,6 +159,9 @@ public class MallMemberService {
         entity.setPhone(form.getPhone());
         entity.setNickname(StringUtils.defaultIfBlank(form.getNickname(), "用户" + form.getPhone().substring(7)));
         entity.setPassword(DigestUtil.md5Hex(form.getPassword()));
+        entity.setAvatar(StringUtils.trimToNull(form.getAvatar()));
+        entity.setWechatPayQr(StringUtils.trimToNull(form.getWechatPayQr()));
+        entity.setWechatReceiveQr(StringUtils.trimToNull(form.getWechatReceiveQr()));
         entity.setInviteCode(nextInviteCode());
         entity.setParentMemberId(parent == null ? null : parent.getMemberId());
         entity.setDeletedFlag(Boolean.FALSE);
@@ -126,6 +208,30 @@ public class MallMemberService {
         List<MallMemberVO> list = SmartBeanUtil.copyList(page.getRecords(), MallMemberVO.class);
         list.forEach(this::fillCommission);
         return ResponseDTO.ok(SmartPageUtil.convert2PageResult(page, list));
+    }
+
+    public ResponseDTO<String> updateMember(MallMemberUpdateForm form) {
+        ensureReady();
+        MallMemberEntity entity = mallMemberDao.selectById(form.getMemberId());
+        if (entity == null || Boolean.TRUE.equals(entity.getDeletedFlag())) {
+            return ResponseDTO.userErrorParam("会员不存在");
+        }
+        LambdaUpdateWrapper<MallMemberEntity> wrapper = new LambdaUpdateWrapper<MallMemberEntity>()
+                .eq(MallMemberEntity::getMemberId, entity.getMemberId());
+        if (form.getNickname() != null) {
+            wrapper.set(MallMemberEntity::getNickname, StringUtils.trimToNull(form.getNickname()));
+        }
+        if (form.getAvatar() != null) {
+            wrapper.set(MallMemberEntity::getAvatar, StringUtils.trimToNull(form.getAvatar()));
+        }
+        if (form.getWechatPayQr() != null) {
+            wrapper.set(MallMemberEntity::getWechatPayQr, StringUtils.trimToNull(form.getWechatPayQr()));
+        }
+        if (form.getWechatReceiveQr() != null) {
+            wrapper.set(MallMemberEntity::getWechatReceiveQr, StringUtils.trimToNull(form.getWechatReceiveQr()));
+        }
+        mallMemberDao.update(null, wrapper);
+        return ResponseDTO.ok();
     }
 
     public ResponseDTO<List<MallAddressVO>> listAddress() {

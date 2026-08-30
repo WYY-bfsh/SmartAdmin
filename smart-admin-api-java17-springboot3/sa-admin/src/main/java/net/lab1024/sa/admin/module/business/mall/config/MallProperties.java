@@ -28,6 +28,11 @@ public class MallProperties {
         private Integer payTimeoutMinutes = 15;
 
         private BigDecimal defaultCommissionRate = new BigDecimal("0.05");
+
+        /**
+         * 二级分销默认比例。千3 = 0.003
+         */
+        private BigDecimal defaultCommissionRateL2 = new BigDecimal("0.003");
     }
 
     @Data

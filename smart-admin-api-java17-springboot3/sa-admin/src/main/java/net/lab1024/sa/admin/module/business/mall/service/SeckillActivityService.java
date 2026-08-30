@@ -48,7 +48,7 @@ public class SeckillActivityService {
         vo.setDefaultCommissionRate(mallProperties.getSeckill().getDefaultCommissionRate());
         vo.setKuaidi100Enabled(StringUtils.isNotBlank(mallProperties.getExpress().getKuaidi100Key())
                 && StringUtils.isNotBlank(mallProperties.getExpress().getKuaidi100Customer()));
-        vo.setH5Path("http://localhost:5173/");
+        vo.setH5Path("http://175.27.131.7/");
         return vo;
     }
 

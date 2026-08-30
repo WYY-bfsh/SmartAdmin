@@ -9,5 +9,6 @@ export const mallAdminApi = {
   ship: (param) => postRequest('/mall/admin/order/ship', param),
   companies: () => getRequest('/mall/admin/express/companies'),
   queryMember: (param) => postRequest('/mall/admin/member/query', param),
+  updateMember: (param) => postRequest('/mall/admin/member/update', param),
   queryCommission: (param) => postRequest('/mall/admin/commission/query', param),
 };

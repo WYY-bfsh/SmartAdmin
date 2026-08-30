@@ -2,20 +2,18 @@
   <view class="login">
     <view class="hero">
       <view class="name">抢购商城</view>
-      <view class="sub">{{ isRegister ? '注册账号，开启秒杀' : '欢迎登录' }}</view>
+      <view class="sub">欢迎登录</view>
     </view>
     <view class="card">
       <view class="label">手机号</view>
       <input class="input" type="number" maxlength="11" v-model="form.phone" placeholder="请输入手机号" />
       <view class="label">密码</view>
       <input class="input" password v-model="form.password" placeholder="请输入密码" />
-      <template v-if="isRegister">
-        <view class="label">邀请码（选填）</view>
-        <input class="input" v-model="form.inviteCode" placeholder="上级邀请码" />
-      </template>
       <view v-if="apiHint" class="err">{{ apiHint }}</view>
-      <button class="btn" :disabled="loading" @click="submit">{{ loading ? '请稍候…' : isRegister ? '注册' : '登录' }}</button>
-      <view class="switch" @click="isRegister = !isRegister">{{ isRegister ? '已有账号，去登录' : '没有账号，去注册' }}</view>
+      <button class="btn" :disabled="loading" @click="submit">{{ loading ? '请稍候…' : '登录' }}</button>
+      <view class="switch">
+        <text @click="goRegister">立即注册</text>
+      </view>
     </view>
     <view class="demo">
       <view class="demo-title">点一下填入演示账号</view>
@@ -29,22 +27,22 @@
   import { reactive, ref } from 'vue';
   import { onShow } from '@dcloudio/uni-app';
   import { mallH5Api, saveMallToken } from '@/api/business/mall/mall-h5-api';
-  import { MALL_INVITE } from '@/constants/local-storage-key-const';
   import { SmartToast } from '@/lib/smart-support';
 
-  const isRegister = ref(false);
   const loading = ref(false);
   const apiHint = ref('');
   const form = reactive({
     phone: '',
     password: '',
-    inviteCode: uni.getStorageSync(MALL_INVITE) || '',
   });
+
+  function goRegister() {
+    uni.navigateTo({ url: '/pages/mall/register' });
+  }
 
   function fill(phone) {
     form.phone = phone;
     form.password = '123456';
-    isRegister.value = false;
   }
 
   async function submit() {
@@ -55,7 +53,7 @@
     loading.value = true;
     apiHint.value = '';
     try {
-      const res = isRegister.value ? await mallH5Api.register(form) : await mallH5Api.login(form);
+      const res = await mallH5Api.login(form);
       saveMallToken(res.data.token);
       SmartToast.success('登录成功');
       uni.switchTab({ url: '/pages/mall/home' });

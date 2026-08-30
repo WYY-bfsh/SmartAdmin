@@ -44,6 +44,11 @@ public class SeckillActivityEntity {
 
     private BigDecimal commissionRate;
 
+    /**
+     * 二级分销比例，空则用全局默认
+     */
+    private BigDecimal commissionRateL2;
+
     private Boolean enabledFlag;
 
     private Boolean deletedFlag;

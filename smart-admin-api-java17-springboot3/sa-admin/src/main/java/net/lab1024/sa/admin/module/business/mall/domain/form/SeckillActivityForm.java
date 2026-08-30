@@ -46,7 +46,11 @@ public class SeckillActivityForm {
     @Schema(description = "本场同时抢购人数，空则用全局待定常数")
     private Integer concurrentLimit;
 
+    @Schema(description = "一级分销比例，直推下级消费。0.05=5%，千3填0.003")
     private BigDecimal commissionRate;
+
+    @Schema(description = "二级分销比例，粉丝消费。千3填0.003")
+    private BigDecimal commissionRateL2;
 
     private Boolean enabledFlag = Boolean.TRUE;
 }

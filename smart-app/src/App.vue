@@ -1,8 +1,10 @@
 <script>
   import { useUserStore } from '@/store/modules/system/user';
+  import { captureMallInvite } from '@/utils/mall-invite';
   export default {
     onLaunch: function () {
       useUserStore().getLoginInfo();
+      captureMallInvite();
     },
     onShow: function () {
       console.log('App Show');
