@@ -2,8 +2,11 @@
   * 发起微信支付
 -->
 <template>
-  <a-modal :open="visible" title="发起微信支付" :width="480" ok-text="生成收款码" cancel-text="取消" @ok="onSubmit" @cancel="onClose">
+  <a-modal :open="visible" title="发起支付" :width="480" ok-text="生成收款码" cancel-text="取消" @ok="onSubmit" @cancel="onClose">
     <a-form ref="formRef" :model="form" :rules="rules" :label-col="{ span: 6 }">
+      <a-form-item label="支付渠道" name="payChannel">
+        <SmartEnumSelect enum-name="PAY_CHANNEL_ENUM" v-model:value="form.payChannel" width="100%" />
+      </a-form-item>
       <a-form-item label="商品描述" name="description">
         <a-input v-model:value="form.description" placeholder="用户扫码时看到的商品名称" />
       </a-form-item>
@@ -23,6 +26,7 @@
   import { payApi } from '/@/api/business/pay/pay-api';
   import { smartSentry } from '/@/lib/smart-sentry';
   import { SmartLoading } from '/@/components/framework/smart-loading';
+  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
 
   const emit = defineEmits(['reloadList', 'showQrcode']);
 
@@ -31,6 +35,7 @@
   const formDefault = {
     description: '',
     amountYuan: undefined,
+    payChannel: 1,
     remark: '',
   };
   const form = reactive({ ...formDefault });
@@ -66,7 +71,14 @@
         SmartLoading.show();
         try {
           const res = await payApi.create(form);
-          message.success(res.data?.mock ? '已生成演示收款码。当前没有真实微信商户，请点「模拟支付成功」完成本次流程' : '已生成收款码，请使用微信扫码支付');
+          const alipay = form.payChannel === 2;
+          message.success(
+            res.data?.mock
+              ? '已生成演示收款码。当前是演示模式，请点「模拟支付」完成本次流程'
+              : alipay
+                ? '已生成收款码，请使用支付宝扫码支付'
+                : '已生成收款码，请使用微信扫码支付'
+          );
           visible.value = false;
           emit('reloadList');
           emit('showQrcode', res.data);

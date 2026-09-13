@@ -377,6 +377,34 @@ function buildPayCatalog() {
         cacheFlag: false,
         frameFlag: false,
       },
+      {
+        menuId: 313,
+        menuName: '支付宝配置',
+        menuType: MENU_TYPE_ENUM.MENU.value,
+        parentId: 300,
+        path: '/pay/alipay-config',
+        component: '/business/pay/alipay-pay-config.vue',
+        icon: 'AlipayCircleOutlined',
+        visibleFlag: true,
+        disabledFlag: false,
+        deletedFlag: false,
+        cacheFlag: false,
+        frameFlag: false,
+      },
+      {
+        menuId: 314,
+        menuName: '支付对账',
+        menuType: MENU_TYPE_ENUM.MENU.value,
+        parentId: 300,
+        path: '/pay/recon',
+        component: '/business/pay/pay-recon-list.vue',
+        icon: 'AuditOutlined',
+        visibleFlag: true,
+        disabledFlag: false,
+        deletedFlag: false,
+        cacheFlag: true,
+        frameFlag: false,
+      },
     ],
   };
 }
@@ -397,24 +425,91 @@ export { ensureMallMenus } from '/@/store/modules/business/mall-menus';
  * 后端未写入支付菜单时，前端补齐目录/页面/按钮权限
  */
 export function ensurePayMenus(menuList) {
-  const list = Array.isArray(menuList) ? [...menuList] : [];
+  let list = Array.isArray(menuList) ? [...menuList] : [];
   const exists = list.some(
-    (e) => e.menuId === 300 || e.menuId === 301 || e.component === '/business/pay/pay-order-list.vue'
+    (e) => e.menuId === 300 || e.menuId === 301 || e.menuId === 310 || e.component === '/business/pay/pay-order-list.vue'
   );
-  if (exists) {
-    return list;
+  if (!exists) {
+    list = list.concat([
+      { menuId: 300, menuName: '微信支付', menuType: MENU_TYPE_ENUM.CATALOG.value, parentId: 0, sort: 4, path: '/pay', component: null, icon: 'WechatOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: false, frameFlag: false },
+      { menuId: 301, menuName: '支付订单', menuType: MENU_TYPE_ENUM.MENU.value, parentId: 300, sort: 1, path: '/pay/order', component: '/business/pay/pay-order-list.vue', icon: 'AccountBookOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: true, frameFlag: false },
+      { menuId: 302, menuName: '商户配置', menuType: MENU_TYPE_ENUM.MENU.value, parentId: 300, sort: 2, path: '/pay/config', component: '/business/pay/wechat-pay-config.vue', icon: 'SettingOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: false, frameFlag: false },
+      { menuId: 303, menuName: '查询订单', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:query', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 304, menuName: '发起支付', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:create', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 305, menuName: '关闭订单', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:close', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 306, menuName: '申请退款', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:refund', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 307, menuName: '同步状态', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:sync', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 308, menuName: '查看配置', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 302, webPerms: 'pay:config:query', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    ]);
   }
-  return list.concat([
-    { menuId: 300, menuName: '微信支付', menuType: MENU_TYPE_ENUM.CATALOG.value, parentId: 0, sort: 4, path: '/pay', component: null, icon: 'WechatOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: false, frameFlag: false },
-    { menuId: 301, menuName: '支付订单', menuType: MENU_TYPE_ENUM.MENU.value, parentId: 300, sort: 1, path: '/pay/order', component: '/business/pay/pay-order-list.vue', icon: 'AccountBookOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: true, frameFlag: false },
-    { menuId: 302, menuName: '商户配置', menuType: MENU_TYPE_ENUM.MENU.value, parentId: 300, sort: 2, path: '/pay/config', component: '/business/pay/wechat-pay-config.vue', icon: 'SettingOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: false, frameFlag: false },
-    { menuId: 303, menuName: '查询订单', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:query', visibleFlag: true, disabledFlag: false, deletedFlag: false },
-    { menuId: 304, menuName: '发起支付', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:create', visibleFlag: true, disabledFlag: false, deletedFlag: false },
-    { menuId: 305, menuName: '关闭订单', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:close', visibleFlag: true, disabledFlag: false, deletedFlag: false },
-    { menuId: 306, menuName: '申请退款', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:refund', visibleFlag: true, disabledFlag: false, deletedFlag: false },
-    { menuId: 307, menuName: '同步状态', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 301, webPerms: 'pay:order:sync', visibleFlag: true, disabledFlag: false, deletedFlag: false },
-    { menuId: 308, menuName: '查看配置', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 302, webPerms: 'pay:config:query', visibleFlag: true, disabledFlag: false, deletedFlag: false },
-  ]);
+  const parent = list.find((e) => e.menuId === 310 || e.menuId === 300 || e.menuName === '微信支付');
+  const parentId = parent ? parent.menuId : 300;
+  if (!list.some((e) => e.component === '/business/pay/alipay-pay-config.vue' || e.menuId === 313)) {
+    list.push({
+      menuId: 313,
+      menuName: '支付宝配置',
+      menuType: MENU_TYPE_ENUM.MENU.value,
+      parentId,
+      sort: 3,
+      path: '/pay/alipay-config',
+      component: '/business/pay/alipay-pay-config.vue',
+      icon: 'AlipayCircleOutlined',
+      visibleFlag: true,
+      disabledFlag: false,
+      deletedFlag: false,
+      cacheFlag: false,
+      frameFlag: false,
+    });
+  }
+  if (!list.some((e) => e.component === '/business/pay/pay-recon-list.vue' || e.menuId === 314)) {
+    list.push(
+      {
+        menuId: 314,
+        menuName: '支付对账',
+        menuType: MENU_TYPE_ENUM.MENU.value,
+        parentId,
+        sort: 4,
+        path: '/pay/recon',
+        component: '/business/pay/pay-recon-list.vue',
+        icon: 'AuditOutlined',
+        visibleFlag: true,
+        disabledFlag: false,
+        deletedFlag: false,
+        cacheFlag: true,
+        frameFlag: false,
+      },
+      { menuId: 315, menuName: '查询对账', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 314, webPerms: 'pay:recon:query', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 316, menuName: '拉取账单', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 314, webPerms: 'pay:recon:pull', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 317, menuName: '上传账单', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 314, webPerms: 'pay:recon:upload', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 318, menuName: '演示对账', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 314, webPerms: 'pay:recon:mock', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 319, menuName: '核销差异', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 314, webPerms: 'pay:recon:handle', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 320, menuName: '导出明细', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 314, webPerms: 'pay:recon:export', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+      { menuId: 321, menuName: '删除批次', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 314, webPerms: 'pay:recon:delete', visibleFlag: true, disabledFlag: false, deletedFlag: false }
+    );
+  } else {
+    const points = [
+      { menuId: 315, menuName: '查询对账', webPerms: 'pay:recon:query' },
+      { menuId: 316, menuName: '拉取账单', webPerms: 'pay:recon:pull' },
+      { menuId: 317, menuName: '上传账单', webPerms: 'pay:recon:upload' },
+      { menuId: 318, menuName: '演示对账', webPerms: 'pay:recon:mock' },
+      { menuId: 319, menuName: '核销差异', webPerms: 'pay:recon:handle' },
+      { menuId: 320, menuName: '导出明细', webPerms: 'pay:recon:export' },
+      { menuId: 321, menuName: '删除批次', webPerms: 'pay:recon:delete' },
+    ];
+    for (const point of points) {
+      if (!list.some((e) => e.webPerms === point.webPerms || e.menuId === point.menuId)) {
+        list.push({
+          ...point,
+          menuType: MENU_TYPE_ENUM.POINTS.value,
+          parentId: 314,
+          visibleFlag: true,
+          disabledFlag: false,
+          deletedFlag: false,
+        });
+      }
+    }
+  }
+  return list;
 }
 
 /**

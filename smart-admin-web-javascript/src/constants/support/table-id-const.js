@@ -37,6 +37,8 @@ export const TABLE_ID_CONST = {
     },
     PAY: {
       ORDER: businessERPInitTableId + 11, //微信支付订单
+      RECON_BATCH: businessERPInitTableId + 12,
+      RECON_ITEM: businessERPInitTableId + 13,
     },
     MEDIA: {
       AI_PROJECT: businessMediaInitTableId + 1,

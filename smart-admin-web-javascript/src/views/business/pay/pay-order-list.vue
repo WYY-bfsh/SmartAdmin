@@ -10,6 +10,9 @@
       <a-form-item label="支付状态" class="smart-query-form-item">
         <SmartEnumSelect enum-name="PAY_STATUS_ENUM" v-model:value="queryForm.payStatus" width="160px" />
       </a-form-item>
+      <a-form-item label="支付渠道" class="smart-query-form-item">
+        <SmartEnumSelect enum-name="PAY_CHANNEL_ENUM" v-model:value="queryForm.payChannel" width="160px" />
+      </a-form-item>
       <a-form-item label="创建日期" class="smart-query-form-item">
         <a-range-picker v-model:value="createTimeRange" style="width: 240px" @change="onDateChange" />
       </a-form-item>
@@ -64,6 +67,11 @@
       :pagination="false"
     >
       <template #bodyCell="{ text, record, column }">
+        <template v-if="column.dataIndex === 'payChannel'">
+          <a-tag :color="record.payChannel === 2 ? 'blue' : 'green'">
+            {{ $smartEnumPlugin.getDescByValue('PAY_CHANNEL_ENUM', text) || (record.payChannel === 2 ? '支付宝' : '微信支付') }}
+          </a-tag>
+        </template>
         <template v-if="column.dataIndex === 'payStatus'">
           <a-tag :color="statusColor(record.payStatus)">{{ $smartEnumPlugin.getDescByValue('PAY_STATUS_ENUM', text) }}</a-tag>
         </template>
@@ -152,6 +160,7 @@
 
   const columns = ref([
     { title: '商户订单号', dataIndex: 'orderNo', width: 220, ellipsis: true },
+    { title: '渠道', dataIndex: 'payChannel', width: 100 },
     { title: '商品描述', dataIndex: 'description', ellipsis: true },
     { title: '金额', dataIndex: 'amountYuan', width: 100 },
     { title: '支付方式', dataIndex: 'tradeType', width: 100 },
@@ -165,6 +174,7 @@
   const queryFormState = {
     orderNo: '',
     payStatus: undefined,
+    payChannel: undefined,
     createTimeBegin: undefined,
     createTimeEnd: undefined,
     pageNum: 1,

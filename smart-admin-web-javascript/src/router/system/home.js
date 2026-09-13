@@ -61,6 +61,24 @@ export const homeRouters = [
           icon: 'SettingOutlined',
         },
       },
+      {
+        path: '/pay/alipay-config',
+        name: '313',
+        component: () => import('/@/views/business/pay/alipay-pay-config.vue'),
+        meta: {
+          title: '支付宝配置',
+          icon: 'AlipayCircleOutlined',
+        },
+      },
+      {
+        path: '/pay/recon',
+        name: '314',
+        component: () => import('/@/views/business/pay/pay-recon-list.vue'),
+        meta: {
+          title: '支付对账',
+          icon: 'AuditOutlined',
+        },
+      },
       { path: '/media/ai-clip/workspace', name: '411', component: () => import('/@/views/business/media/ai-clip/workspace.vue'), meta: { title: 'AI漫剪工作台' } },
       { path: '/media/ai-clip/project', name: '412', component: () => import('/@/views/business/media/ai-clip/project-list.vue'), meta: { title: '我的作品' } },
       { path: '/media/ai-clip/project/editor/:id', name: '413', component: () => import('/@/views/business/media/ai-clip/project-editor.vue'), meta: { title: '作品剪辑', hideInMenu: true } },
