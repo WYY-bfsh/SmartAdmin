@@ -1,0 +1,71 @@
+services:
+  # ============ MySQL：数据用命名卷持久化，首次启动自动导入 SQL ============
+  mysql:
+    image: mysql:8.0
+    container_name: smartadmin-mysql
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: SmartAdmin666
+      MYSQL_DATABASE: smart_admin_v3
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  # ============ Redis ============
+  redis:
+    image: redis:7-alpine
+    container_name: smartadmin-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  # ============ 后端：用 Dockerfile 在服务器上构建 ============
+  sa-admin:
+    build:
+      context: ../smart-admin-api-java17-springboot3
+    image: smartadmin-api:latest
+    container_name: smartadmin-api
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      # 用环境变量覆盖 prod 配置里的 127.0.0.1，指向容器服务名
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true&serverTimezone=Asia/Shanghai"
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: SmartAdmin666
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_DATABASE: 1
+    volumes:
+      - upload-data:/home/smart_admin_v3/upload
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # ============ Nginx：唯一对外入口，反代后端 + 托管前端 ============
+  nginx:
+    image: nginx:alpine
+    container_name: smartadmin-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../smart-admin-web-javascript/dist:/usr/share/nginx/html:ro
+      - ../smart-app/dist/build/h5:/usr/share/nginx/html/app:ro
+      - upload-data:/usr/share/nginx/html/upload:ro
+    depends_on:
+      - sa-admin
+
+volumes:
+  mysql-data:
+  redis-data:
+  upload-data:
