@@ -23,3 +23,12 @@ target/
 **/node_modules
 **/.vscode
 
+
+# local deploy secrets
+deploy/.env
+deploy/生产密码.txt
+
+# 打包产物（25MB，别进仓库）
+*.zip
+smartadmin-src.zip
+

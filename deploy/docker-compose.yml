@@ -1,3 +1,5 @@
+name: smartadmin
+
 services:
   # ============ MySQL：数据用命名卷持久化，首次启动自动导入 SQL ============
   mysql:
@@ -6,7 +8,8 @@ services:
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
-      MYSQL_ROOT_PASSWORD: SmartAdmin666
+      # 密码来自 deploy/.env（已 gitignore），本机与服务器同一个文件，避免两边分叉
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in deploy/.env}
       MYSQL_DATABASE: smart_admin_v3
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
@@ -38,7 +41,7 @@ services:
       # 用环境变量覆盖 prod 配置里的 127.0.0.1，指向容器服务名
       SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true&serverTimezone=Asia/Shanghai"
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: SmartAdmin666
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in deploy/.env}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_DATABASE: 1
@@ -59,9 +62,9 @@ services:
       - "8080:80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ../smart-admin-web-javascript/dist:/usr/share/nginx/html:ro
+      - ../smart-admin-web-javascript/dist:/usr/share/nginx/html
       - ../smart-app/dist/build/h5:/usr/share/nginx/html/app:ro
-      - upload-data:/usr/share/nginx/html/upload:ro
+      - upload-data:/upload:ro
     depends_on:
       - sa-admin
 

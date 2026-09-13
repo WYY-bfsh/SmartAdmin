@@ -100,7 +100,7 @@ file:
     mode: local
     local:
       upload-path: /home/smart_admin_v3/upload/   #文件上传目录
-      url-prefix: http://175.27.131.7/upload/
+      url-prefix: http://175.27.131.7:8080/upload/
     cloud:
       region: oss-cn-hangzhou
       endpoint: https://oss-cn-hangzhou.aliyuncs.com

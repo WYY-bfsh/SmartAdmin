@@ -1,4 +1,4 @@
-package net.lab1024.sa.admin.module.business.mall.service;
+﻿package net.lab1024.sa.admin.module.business.mall.service;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -165,6 +165,8 @@ public class MallSchemaService {
                 addColumnIfMissing(conn, "t_mall_member", "wechat_receive_qr", "varchar(512) DEFAULT NULL COMMENT '微信收款码'");
                 addColumnIfMissing(conn, "t_mall_order", "pay_proof_url", "varchar(512) DEFAULT NULL COMMENT '付款截图'");
                 addColumnIfMissing(conn, "t_mall_order", "pay_note", "varchar(255) DEFAULT NULL COMMENT '付款说明'");
+                addColumnIfMissing(conn, "t_seckill_activity", "commission_rate_l2", "decimal(6,4) DEFAULT NULL COMMENT '二级分销比例'");
+                addColumnIfMissing(conn, "t_mall_member", "commission_level", "int DEFAULT NULL COMMENT '分销等级'");
                 ready = true;
                 log.info("秒杀商城数据表已就绪");
             } catch (Exception e) {
@@ -191,3 +193,4 @@ public class MallSchemaService {
         }
     }
 }
+
