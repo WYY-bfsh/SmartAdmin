@@ -54,7 +54,7 @@ public class SeckillActivityService {
         vo.setDefaultCommissionRate(mallProperties.getSeckill().getDefaultCommissionRate());
         vo.setKuaidi100Enabled(StringUtils.isNotBlank(mallProperties.getExpress().getKuaidi100Key())
                 && StringUtils.isNotBlank(mallProperties.getExpress().getKuaidi100Customer()));
-        vo.setH5Path("http://175.27.131.7/");
+        vo.setH5Path(StringUtils.defaultIfBlank(mallProperties.getH5Path(), "http://175.27.131.7:8080/app/#/pages/mall/index"));
         fillMerchantQr(vo);
         return vo;
     }

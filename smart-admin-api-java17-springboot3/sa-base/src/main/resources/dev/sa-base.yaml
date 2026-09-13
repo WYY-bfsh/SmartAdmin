@@ -205,6 +205,7 @@ wechat:
 
 # 秒杀商城（正规卖货：秒杀 + 两级分销 + 真实发货）
 mall:
+  h5-path: http://localhost:5173/app/#/pages/mall/index
   seckill:
     # 预计同时抢购人数，先待定，可随时改。超过该人数会提示稍后再试（不超卖）
     concurrent-limit: 200

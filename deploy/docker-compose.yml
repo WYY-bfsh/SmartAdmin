@@ -1,10 +1,13 @@
-name: smartadmin
+﻿name: smartadmin
 
 services:
   # ============ MySQL：数据用命名卷持久化，首次启动自动导入 SQL ============
   mysql:
     image: mysql:8.0
     container_name: smartadmin-mysql
+    ports:
+      - "127.0.0.1:3306:3306"
+      - "10.66.66.1:3306:3306"
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
@@ -39,7 +42,7 @@ services:
     environment:
       TZ: Asia/Shanghai
       # 用环境变量覆盖 prod 配置里的 127.0.0.1，指向容器服务名
-      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true&serverTimezone=Asia/Shanghai"
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true&serverTimezone=Asia/Shanghai"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in deploy/.env}
       SPRING_DATA_REDIS_HOST: redis
@@ -59,9 +62,15 @@ services:
     container_name: smartadmin-nginx
     restart: unless-stopped
     ports:
+      - "80:80"
       - "8080:80"
+      - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
       - ../smart-admin-web-javascript/dist:/usr/share/nginx/html
       - ../smart-app/dist/build/h5:/usr/share/nginx/html/app:ro
       - upload-data:/upload:ro

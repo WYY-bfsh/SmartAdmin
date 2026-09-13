@@ -1,4 +1,4 @@
-﻿package net.lab1024.sa.admin.module.business.mall.service;
+package net.lab1024.sa.admin.module.business.mall.service;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -143,6 +143,7 @@ public class MallSchemaService {
                           `order_no` varchar(32) NOT NULL,
                           `amount` decimal(10,2) NOT NULL,
                           `rate` decimal(6,4) NOT NULL,
+                          `commission_level` int DEFAULT NULL COMMENT '1一级 2二级',
                           `status` int NOT NULL DEFAULT 10,
                           `settle_time` datetime DEFAULT NULL,
                           `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -167,6 +168,7 @@ public class MallSchemaService {
                 addColumnIfMissing(conn, "t_mall_order", "pay_note", "varchar(255) DEFAULT NULL COMMENT '付款说明'");
                 addColumnIfMissing(conn, "t_seckill_activity", "commission_rate_l2", "decimal(6,4) DEFAULT NULL COMMENT '二级分销比例'");
                 addColumnIfMissing(conn, "t_mall_member", "commission_level", "int DEFAULT NULL COMMENT '分销等级'");
+                addColumnIfMissing(conn, "t_mall_commission", "commission_level", "int DEFAULT NULL COMMENT '1一级 2二级'");
                 ready = true;
                 log.info("秒杀商城数据表已就绪");
             } catch (Exception e) {

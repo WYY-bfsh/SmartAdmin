@@ -1,0 +1,17 @@
+# 由 enable-https-letsencrypt.sh 生成到 conf.d/smartadmin-ssl.conf
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name __SERVER_NAME__ www.__SERVER_NAME__;
+
+    client_max_body_size 100m;
+
+    ssl_certificate     /etc/letsencrypt/live/__SERVER_NAME__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__SERVER_NAME__/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    include /etc/nginx/snippets/locations.conf;
+}

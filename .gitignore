@@ -32,3 +32,11 @@ deploy/生产密码.txt
 *.zip
 smartadmin-src.zip
 
+
+deploy/smartadmin-vpn.conf
+deploy/*.key
+deploy/nginx/certs/*.crt
+deploy/nginx/certs/*.key
+deploy/nginx/certs/*.pem
+deploy/nginx/conf.d/smartadmin-ssl.conf
+

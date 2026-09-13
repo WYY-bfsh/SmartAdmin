@@ -40,7 +40,12 @@
   <a-modal :open="confirmVisible" title="确认收款" ok-text="确认已收款" @ok="doConfirmPay" @cancel="confirmVisible = false">
     <p>核对付款截图与说明后，确认则订单进入待发货。</p>
     <p>说明：{{ confirmOrder.payNote || '无' }}</p>
-    <a-image v-if="confirmOrder.payProofUrl" :src="proofUrl(confirmOrder.payProofUrl)" :width="240" />
+    <div v-if="confirmOrder.payProofUrl" class="pay-proof-preview">
+      <a-image :src="proofSrc" :width="240" />
+      <div>
+        <a :href="proofSrc" target="_blank" rel="noreferrer">新窗口打开截图</a>
+      </div>
+    </div>
     <a-empty v-else description="未上传截图" />
   </a-modal>
   <a-modal :open="shipVisible" title="真实发货" ok-text="确认发货" @ok="doShip" @cancel="shipVisible = false">
@@ -65,12 +70,23 @@
     <a-empty v-if="!traces.length" description="尚未发货" />
   </a-modal>
 </template>
+<style scoped>
+  .pay-proof-preview {
+    margin-top: 8px;
+  }
+  .pay-proof-preview :deep(.ant-image) {
+    display: block;
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+  }
+</style>
 <script setup>
-  import { onMounted, reactive, ref } from 'vue';
+  import { computed, onMounted, reactive, ref } from 'vue';
   import { message } from 'ant-design-vue';
   import { mallAdminApi } from '/@/api/business/mall/mall-admin-api';
   import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
   import { smartSentry } from '/@/lib/smart-sentry';
+  import { resolveUploadUrl } from '/@/utils/mall-public-url';
 
   const columns = [
     { title: '订单号', dataIndex: 'orderNo', width: 220 },
@@ -98,26 +114,7 @@
   const companies = ref([]);
   const shipForm = reactive({ orderId: undefined, expressCode: 'shunfeng', waybillNo: '' });
 
-  function proofUrl(url) {
-    if (!url) {
-      return '';
-    }
-    try {
-      const parsed = new URL(url, window.location.origin);
-      const idx = parsed.pathname.indexOf('/upload/');
-      const path = idx >= 0 ? parsed.pathname.substring(idx) : parsed.pathname;
-      if (path.startsWith('/upload/')) {
-        return `${window.location.protocol}//${window.location.hostname}${path}`;
-      }
-    } catch (e) {
-      const raw = String(url);
-      const idx = raw.indexOf('/upload/');
-      if (idx >= 0) {
-        return `${window.location.protocol}//${window.location.hostname}${raw.substring(idx)}`;
-      }
-    }
-    return url;
-  }
+  const proofSrc = computed(() => resolveUploadUrl(confirmOrder.payProofUrl));
 
   async function queryData() {
     tableLoading.value = true;
@@ -137,10 +134,10 @@
   }
   async function openConfirm(record) {
     confirmVisible.value = true;
-    Object.assign(confirmOrder, record, { payProofUrl: '', payNote: '' });
+    Object.assign(confirmOrder, record);
     try {
       const res = await mallAdminApi.orderDetail(record.orderId);
-      Object.assign(confirmOrder, res.data || record);
+      Object.assign(confirmOrder, res.data || {});
     } catch (e) {
       smartSentry.captureError(e);
     }

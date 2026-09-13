@@ -1,0 +1,12 @@
+# 构建上下文瘦身：Dockerfile 只需要 pom.xml 和两处 src
+# 排除本机 IDE / 编译产物，避免把几百 MB 的 target 传给 docker daemon
+target/
+**/target/
+.idea/
+*.iml
+*.iws
+*.ipr
+.git/
+.gitignore
+HELP.md
+*.log

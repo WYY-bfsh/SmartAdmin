@@ -89,6 +89,7 @@
   import { fileApi } from '/@/api/support/file-api';
   import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
   import { smartSentry } from '/@/lib/smart-sentry';
+  import { resolveUploadUrl } from '/@/utils/mall-public-url';
 
   const columns = [
     { title: '头像', dataIndex: 'avatar', width: 70 },
@@ -108,24 +109,7 @@
   const current = reactive({});
 
   function fileUrl(url) {
-    if (!url) {
-      return '';
-    }
-    try {
-      const parsed = new URL(url, window.location.origin);
-      const idx = parsed.pathname.indexOf('/upload/');
-      const path = idx >= 0 ? parsed.pathname.substring(idx) : parsed.pathname;
-      if (path.startsWith('/upload/')) {
-        return `${window.location.protocol}//${window.location.hostname}${path}`;
-      }
-    } catch (e) {
-      const raw = String(url);
-      const idx = raw.indexOf('/upload/');
-      if (idx >= 0) {
-        return `${window.location.protocol}//${window.location.hostname}${raw.substring(idx)}`;
-      }
-    }
-    return url;
+    return resolveUploadUrl(url);
   }
 
   async function queryData() {

@@ -1,0 +1,18 @@
+# 由 enable-https-selfsigned.sh 生成到 conf.d/smartadmin-ssl.conf
+# 不要手改生成文件，改这份模板后再跑脚本。
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name __SERVER_NAME__;
+
+    client_max_body_size 100m;
+
+    ssl_certificate     /etc/nginx/certs/selfsigned.crt;
+    ssl_certificate_key /etc/nginx/certs/selfsigned.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    include /etc/nginx/snippets/locations.conf;
+}

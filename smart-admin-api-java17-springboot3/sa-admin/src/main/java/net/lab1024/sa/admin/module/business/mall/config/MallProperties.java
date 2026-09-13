@@ -18,6 +18,9 @@ public class MallProperties {
 
     private Express express = new Express();
 
+    /** 用户端 H5 完整地址，例如 http://IP:8080/app/#/pages/mall/index */
+    private String h5Path = "";
+
     @Data
     public static class Seckill {
         /**
