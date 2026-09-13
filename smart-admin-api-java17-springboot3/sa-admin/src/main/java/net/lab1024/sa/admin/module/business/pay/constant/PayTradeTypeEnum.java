@@ -12,6 +12,9 @@ import net.lab1024.sa.base.common.enumeration.BaseEnum;
 public enum PayTradeTypeEnum implements BaseEnum {
 
     NATIVE(1, "扫码支付"),
+    JSAPI(2, "公众号/JSAPI"),
+    H5(3, "手机H5"),
+    PAGE(4, "电脑网站"),
     ;
 
     private final Integer value;

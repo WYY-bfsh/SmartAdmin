@@ -71,6 +71,16 @@ public class WeChatPayProperties {
      */
     private String notifyUrl;
 
+    /**
+     * 公众号 AppSecret，仅微信内 JSAPI 网页授权取 openid 时需要
+     */
+    private String appSecret;
+
+    /**
+     * H5 支付 scene_info.app_url，例如 https://desire.wang
+     */
+    private String h5AppUrl;
+
     @PostConstruct
     public void applyDemoDefaults() {
         if (!Boolean.TRUE.equals(mock)) {

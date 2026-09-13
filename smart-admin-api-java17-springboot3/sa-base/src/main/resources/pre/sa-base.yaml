@@ -191,10 +191,33 @@ smart:
 wechat:
   pay:
     enabled: false
+    mock: false
     app-id:
+    app-secret:
     mch-id:
     api-v3-key:
     merchant-serial-number:
     private-key:
     private-key-path:
-    notify-url: https://your-domain.com/pay/wechat/notify
+    notify-url: https://your-domain.com/api/pay/wechat/notify
+    h5-app-url: https://your-domain.com
+
+# 支付宝支付
+alipay:
+  pay:
+    enabled: false
+    mock: false
+    sandbox: true
+    sign-mode: public-key
+    app-id:
+    private-key:
+    private-key-path:
+    alipay-public-key:
+    app-cert-path:
+    alipay-public-cert-path:
+    alipay-root-cert-path:
+    notify-url: https://your-domain.com/api/pay/alipay/notify
+    return-url: https://your-domain.com/pay/alipay/return
+    charset: UTF-8
+    sign-type: RSA2
+    timeout-express: 30m

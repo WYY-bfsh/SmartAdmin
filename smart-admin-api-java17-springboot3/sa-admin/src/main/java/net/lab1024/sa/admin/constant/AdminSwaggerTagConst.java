@@ -28,6 +28,8 @@ public class AdminSwaggerTagConst extends SwaggerTagConst {
 
         public static final String PAY_WECHAT = "支付-微信支付";
 
+        public static final String PAY_RECON = "支付-对账";
+
         public static final String MEDIA_AI_CLIP = "媒体-AI漫剪";
 
         public static final String MEDIA_MUSIC = "媒体-音乐播放器";

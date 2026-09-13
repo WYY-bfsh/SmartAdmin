@@ -74,6 +74,13 @@ public class MallOrderEntity {
      */
     private String payNote;
 
+    /**
+     * 10 线下转账  20 微信支付
+     */
+    private Integer payChannel;
+
+    private String wxTransactionId;
+
     private Boolean deletedFlag;
 
     private LocalDateTime updateTime;

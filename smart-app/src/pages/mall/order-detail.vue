@@ -6,14 +6,40 @@
       <view class="row">订单号 {{ order.orderNo }}</view>
       <view>{{ order.goodsName }} × {{ order.qty }}</view>
       <view class="price">应付 ¥{{ order.amount }}</view>
+      <view v-if="order.payChannel === 20" class="addr">微信支付 {{ order.wxTransactionId || '' }}</view>
+      <view v-if="order.payChannel === 30" class="addr">支付宝 {{ order.wxTransactionId || '' }}</view>
       <view class="addr">{{ order.receiverName }} {{ order.receiverPhone }}\n{{ order.receiverAddress }}</view>
       <view v-if="order.waybillNo" class="logi" @click="goExpress">
         {{ order.expressName }} {{ order.waybillNo }} · 查看物流
       </view>
     </view>
 
+    <view class="card" v-if="order.orderStatus === 10 && alipayEnabled">
+      <view class="sub">支付宝支付</view>
+      <view class="addr" v-if="config.alipayPayMock">当前是演示模式，不会向支付宝收款。</view>
+      <view v-if="aliQr" class="wx-box">
+        <image class="qr wx" :src="aliQr" mode="aspectFit" />
+        <view class="qr-tip">请使用支付宝扫码支付</view>
+      </view>
+      <button class="buy" :disabled="paying" @click="startAlipayPay">{{ paying ? '支付处理中…' : '支付宝付款' }}</button>
+      <button v-if="aliPayOrderId" class="ghost" @click="openAlipayWap">手机打开支付宝收银台</button>
+      <button v-if="config.alipayPayMock" class="ghost" :disabled="paying" @click="mockAlipayPay">演示：模拟支付宝支付成功</button>
+    </view>
+
+    <view class="card" v-if="order.orderStatus === 10 && wechatEnabled">
+      <view class="sub">微信支付</view>
+      <view class="addr" v-if="config.wechatPayMock">当前是演示模式，不会向微信收款。</view>
+      <view v-if="wxQr" class="wx-box">
+        <image class="qr wx" :src="wxQr" mode="aspectFit" />
+        <view class="qr-tip">请使用微信扫码支付</view>
+      </view>
+      <view v-if="paying" class="addr">正在处理支付，支付完成后本页会自动更新</view>
+      <button class="buy" :disabled="paying" @click="startWechatPay">{{ wechatBtnText }}</button>
+      <button v-if="config.wechatPayMock" class="ghost" :disabled="paying" @click="mockWechatPay">演示：模拟支付成功</button>
+    </view>
+
     <view class="card" v-if="order.orderStatus === 10">
-      <view class="sub">请扫商家收款码转账</view>
+      <view class="sub">{{ wechatEnabled ? '或扫商家收款码转账' : '请扫商家收款码转账' }}</view>
       <view v-if="!hasPayQr" class="warn">商家尚未配置收款码，请稍后再支付</view>
       <view class="qr-row">
         <view class="qr-item">
@@ -56,26 +82,250 @@
 </template>
 
 <script setup>
-  import { computed, ref } from 'vue';
+  import { computed, onUnmounted, ref } from 'vue';
   import { onLoad, onShow } from '@dcloudio/uni-app';
   import { mallH5Api, MALL_ORDER_STATUS, resolveMallFileUrl } from '@/api/business/mall/mall-h5-api';
   import { SmartToast } from '@/lib/smart-support';
 
   const orderId = ref('');
+  const wxOauthCode = ref('');
   const order = ref({});
   const config = ref({});
   const payProofUrl = ref('');
   const payNote = ref('');
   const uploading = ref(false);
   const submitting = ref(false);
+  const paying = ref(false);
+  const wxQr = ref('');
+  const aliQr = ref('');
+  const aliPayOrderId = ref('');
+  const openid = ref('');
+  let pollTimer = null;
+  let autoStarted = false;
+  let autoAliStarted = false;
 
   const wechatQr = computed(() => resolveMallFileUrl(config.value.merchantWechatQr));
   const alipayQr = computed(() => resolveMallFileUrl(config.value.merchantAlipayQr));
   const hasPayQr = computed(() => !!(wechatQr.value || alipayQr.value));
   const proofPreview = computed(() => resolveMallFileUrl(payProofUrl.value || order.value.payProofUrl));
+  const wechatEnabled = computed(() => !!config.value.wechatPayEnabled);
+  const alipayEnabled = computed(() => !!config.value.alipayPayEnabled);
+  const wechatBtnText = computed(() => {
+    if (paying.value) {
+      return '支付处理中…';
+    }
+    if (isWeixin()) {
+      return '微信付款';
+    }
+    if (isMobile()) {
+      return '手机微信支付';
+    }
+    return wxQr.value ? '刷新收款码' : '获取微信收款码';
+  });
 
   function statusText(v) {
     return MALL_ORDER_STATUS[v] || '';
+  }
+
+  function isWeixin() {
+    // #ifdef H5
+    return typeof navigator !== 'undefined' && /MicroMessenger/i.test(navigator.userAgent);
+    // #endif
+    return false;
+  }
+
+  function isMobile() {
+    // #ifdef H5
+    return typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    // #endif
+    return false;
+  }
+
+  function stopPoll() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  function startPoll() {
+    stopPoll();
+    pollTimer = setInterval(async () => {
+      try {
+        const res = await mallH5Api.orderDetail(orderId.value);
+        order.value = res.data || {};
+        if (order.value.orderStatus && order.value.orderStatus !== 10) {
+          stopPoll();
+          paying.value = false;
+          if (order.value.orderStatus === 20 || order.value.orderStatus === 15) {
+            SmartToast.success(order.value.orderStatus === 20 ? '支付成功' : '已提交');
+          }
+        }
+      } catch (e) {
+        // toast already shown
+      }
+    }, 2000);
+  }
+
+  function invokeJsapi(pay) {
+    return new Promise((resolve, reject) => {
+      // #ifdef H5
+      const run = () => {
+        if (typeof WeixinJSBridge === 'undefined') {
+          reject(new Error('请在微信内打开'));
+          return;
+        }
+        WeixinJSBridge.invoke(
+          'getBrandWCPayRequest',
+          {
+            appId: pay.jsapiAppId,
+            timeStamp: pay.jsapiTimeStamp,
+            nonceStr: pay.jsapiNonceStr,
+            package: pay.jsapiPackage,
+            signType: pay.jsapiSignType,
+            paySign: pay.jsapiPaySign,
+          },
+          (res) => {
+            if (res.err_msg === 'get_brand_wcpay_request:ok') {
+              resolve();
+              return;
+            }
+            if (res.err_msg === 'get_brand_wcpay_request:cancel') {
+              reject(new Error('已取消支付'));
+              return;
+            }
+            reject(new Error(res.err_msg || '支付失败'));
+          }
+        );
+      };
+      if (typeof WeixinJSBridge === 'undefined') {
+        document.addEventListener('WeixinJSBridgeReady', run, { once: true });
+      } else {
+        run();
+      }
+      return;
+      // #endif
+      reject(new Error('请使用 H5 在微信中支付'));
+    });
+  }
+
+  async function startWechatPay() {
+    if (!wechatEnabled.value || order.value.orderStatus !== 10) {
+      return;
+    }
+    paying.value = true;
+    try {
+      if (isWeixin() && config.value.wechatJsapiReady) {
+        if (!openid.value && wxOauthCode.value) {
+          const auth = await mallH5Api.wechatOauth(wxOauthCode.value);
+          openid.value = auth.data || '';
+          wxOauthCode.value = '';
+        }
+        if (!openid.value) {
+          // #ifdef H5
+          const redirectUri = `${location.origin}${location.pathname}`;
+          const urlRes = await mallH5Api.wechatOauthUrl(redirectUri, `mallpay_${orderId.value}`);
+          if (urlRes.data) {
+            location.href = urlRes.data;
+            return;
+          }
+          // #endif
+          SmartToast.toast('无法发起微信授权');
+          paying.value = false;
+          return;
+        }
+        const pre = await mallH5Api.wechatPrepay({
+          orderId: order.value.orderId,
+          tradeType: 'jsapi',
+          openid: openid.value,
+        });
+        const data = pre.data || {};
+        if (data.needOpenid) {
+          SmartToast.toast('请先完成微信授权');
+          paying.value = false;
+          return;
+        }
+        if (data.mock) {
+          startPoll();
+          return;
+        }
+        await invokeJsapi(data);
+        startPoll();
+        return;
+      }
+      if (isMobile() && !isWeixin()) {
+        const pre = await mallH5Api.wechatPrepay({
+          orderId: order.value.orderId,
+          tradeType: 'h5',
+        });
+        startPoll();
+        if (pre.data && pre.data.h5Url) {
+          // #ifdef H5
+          location.href = pre.data.h5Url;
+          // #endif
+        }
+        return;
+      }
+      const pre = await mallH5Api.wechatPrepay({
+        orderId: order.value.orderId,
+        tradeType: 'native',
+      });
+      wxQr.value = (pre.data && pre.data.qrcodeBase64) || '';
+      startPoll();
+    } catch (e) {
+      paying.value = false;
+    }
+  }
+
+  async function startAlipayPay() {
+    if (!alipayEnabled.value || order.value.orderStatus !== 10) {
+      return;
+    }
+    paying.value = true;
+    try {
+      const pre = await mallH5Api.alipayPrepay({
+        orderId: order.value.orderId,
+        tradeType: 'native',
+      });
+      aliQr.value = (pre.data && pre.data.qrcodeBase64) || '';
+      aliPayOrderId.value = (pre.data && pre.data.payOrderId) || '';
+      startPoll();
+    } catch (e) {
+      paying.value = false;
+    }
+  }
+
+  function openAlipayWap() {
+    if (!aliPayOrderId.value || typeof window === 'undefined') {
+      return;
+    }
+    window.location.href = `${window.location.origin}/api/pay/alipay/wap/${aliPayOrderId.value}`;
+  }
+
+  async function mockAlipayPay() {
+    paying.value = true;
+    try {
+      await mallH5Api.alipayMockPay(order.value.orderId);
+      SmartToast.success('已模拟支付宝支付');
+      await load();
+    } catch (e) {
+      // toast already shown
+    } finally {
+      paying.value = false;
+    }
+  }
+
+  async function mockWechatPay() {
+    paying.value = true;
+    try {
+      await mallH5Api.wechatMockPay(order.value.orderId);
+      SmartToast.success('已模拟支付');
+      await load();
+    } catch (e) {
+      // toast already shown
+    } finally {
+      paying.value = false;
+    }
   }
 
   async function load() {
@@ -91,6 +341,16 @@
       }
       if (order.value.payProofUrl) {
         payProofUrl.value = order.value.payProofUrl;
+      }
+      if (order.value.orderStatus === 10 && wechatEnabled.value && !autoStarted) {
+        autoStarted = true;
+        if (wxOauthCode.value || (!isWeixin() && !isMobile())) {
+          startWechatPay();
+        }
+      }
+      if (order.value.orderStatus === 10 && alipayEnabled.value && !autoAliStarted) {
+        autoAliStarted = true;
+        startAlipayPay();
       }
     } catch (e) {
       // toast already shown
@@ -164,12 +424,17 @@
 
   onLoad((options) => {
     orderId.value = options.id;
+    wxOauthCode.value = options.wxcode || '';
   });
 
   onShow(() => {
     if (orderId.value) {
       load();
     }
+  });
+
+  onUnmounted(() => {
+    stopPoll();
   });
 </script>
 
@@ -275,5 +540,21 @@
   }
   .buy[disabled] {
     opacity: 0.6;
+  }
+  .ghost {
+    margin-top: 16rpx;
+    background: #fff;
+    color: #ee0a24;
+    border: 2rpx solid #ee0a24;
+    border-radius: 48rpx;
+  }
+  .wx-box {
+    text-align: center;
+    margin-bottom: 24rpx;
+  }
+  .qr.wx {
+    width: 420rpx;
+    height: 420rpx;
+    margin: 0 auto;
   }
 </style>

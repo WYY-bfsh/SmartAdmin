@@ -195,6 +195,7 @@ wechat:
     enabled: true
     mock: true
     app-id: wx8f3a2c1d4e5b6789
+    app-secret:
     mch-id: 1639284750
     api-v3-key: SmartAdminWxPayDemoKey32Chars!!
     merchant-serial-number: 5A8C2E1B9D4F60783C1A0E6B2D9F4C7A8E1B3D5F
@@ -202,6 +203,27 @@ wechat:
     private-key: DEMO_MOCK_PRIVATE_KEY
     private-key-path:
     notify-url: https://demo.smartadmin.local/pay/wechat/notify
+    h5-app-url: http://localhost:5173
+
+# 支付宝支付
+alipay:
+  pay:
+    enabled: true
+    mock: false
+    sandbox: true
+    sign-mode: public-key
+    app-id: 9021000168612951
+    private-key: MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCxHzE4RUlRq4KWg18+vrI56lIoIlEdbuSkcei75wpNRh2sQYyyPvqotbPgyDgtx+85v/vWnws+puGhgmJhoU0xVVu4/X80e0Vz4mfPjCaQVb0EjKZgTSTRvnNIwbnBcGTUrKMrDnKqZlpkCJbakyK/Nu9SfUgIlbjDFeLsUP+h8Dfp03DQwEB9tXnwNIXbXRtLuZivprHNEICUZn740lU5iCfmGPOwb3m8CDOUjMWGJivnOWKztI925xJNpgx1fdb7+mXCe8Am8DXULIyvQWTfWL+DAuKmzWU8FqH2MBXME0YrGX6bNH9p0yXSpgEdftDhnr07cRaa7JTZ/BmtFMUZAgMBAAECggEAcL+AX2eLkpdw20rpOFG/tio4/h9KL0hF94AjPGmIH0SA4wQfAeAhQ3/W70HEsS/SUpqpPyeiytEEVAFhivBY6QyDBLEpZkkKHwiCOJXofnx1hA3cYvT4eSOY0zmuezqGlPMIMwJRb7MT2xW0oZKDzeC0W3gwgHZ+VID8IJ42++eTkR+wG7I0rblhVogf4bwOsdUNa8GXMnr4Oqq0vEU+Eesu2uhxCMSvxsJYYkfa/yTc9y//pT50BQa7cXKqAgUQ6rTzTzmS8cG71XFaCeoSKz9yRDP2ABB8xAudvkfC0zOstQpJYdER2cYK0ugSTvEJPOQGWcuNkGvzTXhCWh3PYQKBgQDtu7K+fkzN4jiXOhFmdNDZvZQm106AEx51lfglVA6WqAArePiyQ+koR8u0FaEr5BTEulgTgqFZn1TbzI23+d22dicdWMKSKZeo1A06NZ6Vs/OscADQ634WhC7ScCUhqudfCn3oNLC8koxJGBH7kCaH0mCBUIkKtDGpRzikZyQAJQKBgQC+uz7xEJe/oeTXtyviCXul8rY4XcG8M2i97CODiYf/eP1x7R/KH8WU31QnM2qEtsXvuRqnyDC+TrMKPCIQ1KJUlfC//JAdEcath1ZxXtf2bB/VepPYZINTvzrmOqQpVsB3c7nTRfbYjwoPB498TF0uYPXguAxXYTEiYBEiXhrU5QKBgBQBZpJHOJlevxpixZIUpHqeTHhUSAPZGAgXHbGueCfPbWw7GtqNgnJkUE0QQObbo6/GaqEBrihHkzGH7ikcOr8fBD2g+YapP1zys0ZBut2oLgpFxpvOJWcpqnMFAurpYd0KmfvPa0wDHRENmH3N7KAjYQGg0Fd5QHCZULftAgeNAoGBAKbP0T64yl950lGwDBtHO/NpkWE+7sARHlxs+KqEUINpaBCJ2THIE+AeatVWLKUhzX/aHqv7dFYdMo2TBiA+ODNOaB8hX1FtSJxgL4Q79Rm6eyUUbdXmIs3OBE9znjvhebd/aViUak4A3EVE0YNermhvuNvvXCvX/0cXSiUKtODZAoGADK4tUwaJ4HfqZHMpMQC69EwTPL6WC076cVcsqjs5ZMGaQ+bKTdUGRGPcFl9nuW+11F2zqny5tJ98F3JChcgOObIHrNPk4Oqaqvq5of3rjOMsjd6N1bGMcowbqYQs+UneqmI/6xnnPhhAoKr43S+wpy0WoYynFCRqnquPitSNTOo=
+    private-key-path:
+    alipay-public-key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApkdrQzi5xg/nhjonNDgpEwnoIUftTZgq4yE+GvCZ1xaF5huPuaVdplLjV/HhOxVKpRcdQ4eeqXU41SHhSgZOQgkUTp3jtb3aHQnd12vwxYheaeXnFCL9Jj3EeWgkVxAequQsbc/UiPdeJjRwZ/aCnW45Q300t/KwbSZ5o+yvpeerx34jdafqkTGUfH9oZ2EIpHToGTlHfzbui352u2C9DvgrPdh75hl5louvi7BAlBqYaE/NrF6lUbO6p4iw3Y7EoSfncWItpDhWZLwkr682BtSkNtwv7E++Td2RTH/S0aCwZecC/PVHRtkpL1h5tR/vYvJNhZZ9OAN4+WyF/HRRVwIDAQAB
+    app-cert-path:
+    alipay-public-cert-path:
+    alipay-root-cert-path:
+    notify-url: https://your-domain.com/api/pay/alipay/notify
+    return-url: https://your-domain.com/pay/alipay/return
+    charset: UTF-8
+    sign-type: RSA2
+    timeout-express: 30m
 
 # 秒杀商城（正规卖货：秒杀 + 两级分销 + 真实发货）
 mall:

@@ -1,6 +1,6 @@
 /**
  * 秒杀商城 H5 接口。Token 放在请求头 Mall-Token。
- * 下单后付款走 submitPayProof，不再一键 mock 支付。
+ * 下单后：微信支付可用则走 wechatPrepay；否则 submitPayProof 收款码截图。
  */
 import { MALL_TOKEN } from '@/constants/local-storage-key-const';
 
@@ -205,6 +205,13 @@ export const mallH5Api = {
   addressList: () => mallRequest('/mall/h5/address/list', 'GET'),
   saveAddress: (data) => mallRequest('/mall/h5/address/save', 'POST', data),
   createOrder: (data) => mallRequest('/mall/h5/order/create', 'POST', data),
+  wechatPrepay: (data) => mallRequest('/mall/h5/order/wechat/prepay', 'POST', data),
+  wechatMockPay: (orderId) => mallRequest(`/mall/h5/order/wechat/mock-pay/${orderId}`, 'POST'),
+  wechatOauthUrl: (redirectUri, state) =>
+    mallRequest('/mall/h5/wechat/oauth-url', 'GET', { redirectUri, state }),
+  wechatOauth: (code) => mallRequest('/mall/h5/wechat/oauth', 'GET', { code }),
+  alipayPrepay: (data) => mallRequest('/mall/h5/order/alipay/prepay', 'POST', data),
+  alipayMockPay: (orderId) => mallRequest(`/mall/h5/order/alipay/mock-pay/${orderId}`, 'POST'),
   submitPayProof: (data) => mallRequest('/mall/h5/order/pay-proof', 'POST', data),
   orderList: (orderStatus) =>
     mallRequest('/mall/h5/order/list', 'GET', orderStatus == null ? {} : { orderStatus }),

@@ -169,6 +169,9 @@ public class MallSchemaService {
                 addColumnIfMissing(conn, "t_seckill_activity", "commission_rate_l2", "decimal(6,4) DEFAULT NULL COMMENT '二级分销比例'");
                 addColumnIfMissing(conn, "t_mall_member", "commission_level", "int DEFAULT NULL COMMENT '分销等级'");
                 addColumnIfMissing(conn, "t_mall_commission", "commission_level", "int DEFAULT NULL COMMENT '1一级 2二级'");
+                addColumnIfMissing(conn, "t_mall_member", "wechat_openid", "varchar(64) DEFAULT NULL COMMENT '微信openid'");
+                addColumnIfMissing(conn, "t_mall_order", "pay_channel", "int DEFAULT NULL COMMENT '10线下 20微信'");
+                addColumnIfMissing(conn, "t_mall_order", "wx_transaction_id", "varchar(64) DEFAULT NULL COMMENT '微信支付单号'");
                 ready = true;
                 log.info("秒杀商城数据表已就绪");
             } catch (Exception e) {

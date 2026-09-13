@@ -14,7 +14,7 @@
       v-else
       type="info"
       show-icon
-      message="商户密钥请写在后端 sa-base.yaml 的 wechat.pay 节点，不要放到前端或数据库。本地调试时 notify-url 必须是公网 HTTPS，可用内网穿透。"
+      message="商户密钥写在后端 sa-base.yaml 的 wechat.pay。生产回调必须是 https://desire.wang/api/pay/wechat/notify（经 Nginx /api 转到 Java）。秒杀商城启用后支持 Native 扫码、微信内 JSAPI、手机 H5；未启用则仍走收款码截图。"
       class="smart-margin-bottom10"
     />
 
@@ -31,8 +31,12 @@
       <a-descriptions-item label="AppId">{{ config.appId || '-' }}</a-descriptions-item>
       <a-descriptions-item label="商户号">{{ config.mchId || '-' }}</a-descriptions-item>
       <a-descriptions-item label="回调地址">{{ config.notifyUrl || '-' }}</a-descriptions-item>
+      <a-descriptions-item label="H5 app_url">{{ config.h5AppUrl || '-' }}</a-descriptions-item>
       <a-descriptions-item label="商户私钥">
         <a-tag :color="config.privateKeyReady ? 'green' : 'orange'">{{ config.privateKeyReady ? '已配置' : '未配置' }}</a-tag>
+      </a-descriptions-item>
+      <a-descriptions-item label="AppSecret（JSAPI）">
+        <a-tag :color="config.appSecretReady ? 'green' : 'orange'">{{ config.appSecretReady ? '已配置' : '未配置' }}</a-tag>
       </a-descriptions-item>
     </a-descriptions>
 
@@ -50,7 +54,10 @@
     merchant-serial-number: 5A8C2E1B9D4F60783C1A0E6B2D9F4C7A8E1B3D5F
     private-key: DEMO_MOCK_PRIVATE_KEY
     notify-url: https://demo.smartadmin.local/pay/wechat/notify</pre>
-    <p>以后有真实商户，把 <code>mock</code> 改成 <code>false</code>，再换成微信商户平台里的 AppId、商户号、密钥和证书，然后重启后端。</p>
+    <p>正式环境把 <code>enabled</code> 改为 <code>true</code>、<code>mock</code> 改为 <code>false</code>，填写 AppId、AppSecret（微信内支付授权用）、商户号、APIv3 密钥、证书序列号、私钥，并设置：</p>
+    <pre class="pay-config-pre">notify-url: https://desire.wang/api/pay/wechat/notify
+h5-app-url: https://desire.wang</pre>
+    <p>微信商户平台同时配置该回调地址。填完后重启 Java，秒杀待付款页会自动走微信支付。</p>
   </a-card>
 </template>
 

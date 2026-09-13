@@ -28,6 +28,7 @@ import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.common.util.SmartPageUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,6 +75,14 @@ public class MallOrderService {
 
     @Resource
     private MallProperties mallProperties;
+
+    @Lazy
+    @Resource
+    private MallWechatPayService mallWechatPayService;
+
+    @Lazy
+    @Resource
+    private MallAlipayPayService mallAlipayPayService;
 
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<MallOrderVO> create(MallCreateOrderForm form) {
@@ -123,6 +132,7 @@ public class MallOrderService {
         order.setDeletedFlag(Boolean.FALSE);
         order.setCreateTime(LocalDateTime.now());
         mallOrderDao.insert(order);
+        mallWechatPayService.attachAfterCreate(order);
         return ResponseDTO.ok(toVo(order, false));
     }
 
@@ -302,8 +312,31 @@ public class MallOrderService {
         if (rows <= 0) {
             return false;
         }
+        mallWechatPayService.closeIfAny(order);
+        mallAlipayPayService.closeIfAny(order);
         seckillActivityDao.restoreStock(order.getActivityId(), order.getQty());
         return true;
+    }
+
+    public MallOrderEntity requireOwnOrderForPay(Long orderId) {
+        return requireOwnOrder(orderId);
+    }
+
+    public void freezeCommissionPublic(MallOrderEntity order) {
+        freezeCommission(order);
+    }
+
+    public void cancelFrozenCommission(Long orderId) {
+        if (orderId == null) {
+            return;
+        }
+        List<MallCommissionEntity> list = mallCommissionDao.selectList(new LambdaQueryWrapper<MallCommissionEntity>()
+                .eq(MallCommissionEntity::getOrderId, orderId)
+                .eq(MallCommissionEntity::getStatus, CommissionStatusEnum.FROZEN.getValue()));
+        for (MallCommissionEntity commission : list) {
+            commission.setStatus(CommissionStatusEnum.CANCELED.getValue());
+            mallCommissionDao.updateById(commission);
+        }
     }
 
     private void completeOrder(MallOrderEntity order) {

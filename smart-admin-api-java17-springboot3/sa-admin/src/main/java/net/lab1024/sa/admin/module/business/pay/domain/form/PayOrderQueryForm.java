@@ -2,6 +2,7 @@ package net.lab1024.sa.admin.module.business.pay.domain.form;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import net.lab1024.sa.admin.module.business.pay.constant.PayChannelEnum;
 import net.lab1024.sa.admin.module.business.pay.constant.PayStatusEnum;
 import net.lab1024.sa.base.common.domain.PageParam;
 import net.lab1024.sa.base.common.swagger.SchemaEnum;
@@ -23,6 +24,10 @@ public class PayOrderQueryForm extends PageParam {
     @SchemaEnum(PayStatusEnum.class)
     @CheckEnum(value = PayStatusEnum.class, required = false, message = "支付状态错误")
     private Integer payStatus;
+
+    @SchemaEnum(PayChannelEnum.class)
+    @CheckEnum(value = PayChannelEnum.class, required = false, message = "支付渠道错误")
+    private Integer payChannel;
 
     @Schema(description = "创建-开始日期")
     private LocalDate createTimeBegin;

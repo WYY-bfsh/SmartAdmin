@@ -189,14 +189,38 @@ smart:
 mall:
   h5-path: https://desire.wang/app/#/pages/mall/index
 
-# 微信支付 APIv3（Native 扫码）
+# 微信支付 APIv3。填齐商户资料后把 enabled 改为 true；没资料时保持 false，商城仍走收款码截图。
 wechat:
   pay:
     enabled: false
+    mock: false
     app-id:
+    app-secret:
     mch-id:
     api-v3-key:
     merchant-serial-number:
     private-key:
     private-key-path:
-    notify-url: https://your-domain.com/pay/wechat/notify
+    notify-url: https://desire.wang/api/pay/wechat/notify
+    h5-app-url: https://desire.wang
+
+# 支付宝沙箱（按业务要求密钥进仓库；正式商户密钥不要用这套）
+alipay:
+  pay:
+    enabled: true
+    mock: false
+    sandbox: true            # 正式收款再改 false
+    sign-mode: public-key    # 上线改 cert
+    app-id: 9021000168612951
+    private-key: MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCxHzE4RUlRq4KWg18+vrI56lIoIlEdbuSkcei75wpNRh2sQYyyPvqotbPgyDgtx+85v/vWnws+puGhgmJhoU0xVVu4/X80e0Vz4mfPjCaQVb0EjKZgTSTRvnNIwbnBcGTUrKMrDnKqZlpkCJbakyK/Nu9SfUgIlbjDFeLsUP+h8Dfp03DQwEB9tXnwNIXbXRtLuZivprHNEICUZn740lU5iCfmGPOwb3m8CDOUjMWGJivnOWKztI925xJNpgx1fdb7+mXCe8Am8DXULIyvQWTfWL+DAuKmzWU8FqH2MBXME0YrGX6bNH9p0yXSpgEdftDhnr07cRaa7JTZ/BmtFMUZAgMBAAECggEAcL+AX2eLkpdw20rpOFG/tio4/h9KL0hF94AjPGmIH0SA4wQfAeAhQ3/W70HEsS/SUpqpPyeiytEEVAFhivBY6QyDBLEpZkkKHwiCOJXofnx1hA3cYvT4eSOY0zmuezqGlPMIMwJRb7MT2xW0oZKDzeC0W3gwgHZ+VID8IJ42++eTkR+wG7I0rblhVogf4bwOsdUNa8GXMnr4Oqq0vEU+Eesu2uhxCMSvxsJYYkfa/yTc9y//pT50BQa7cXKqAgUQ6rTzTzmS8cG71XFaCeoSKz9yRDP2ABB8xAudvkfC0zOstQpJYdER2cYK0ugSTvEJPOQGWcuNkGvzTXhCWh3PYQKBgQDtu7K+fkzN4jiXOhFmdNDZvZQm106AEx51lfglVA6WqAArePiyQ+koR8u0FaEr5BTEulgTgqFZn1TbzI23+d22dicdWMKSKZeo1A06NZ6Vs/OscADQ634WhC7ScCUhqudfCn3oNLC8koxJGBH7kCaH0mCBUIkKtDGpRzikZyQAJQKBgQC+uz7xEJe/oeTXtyviCXul8rY4XcG8M2i97CODiYf/eP1x7R/KH8WU31QnM2qEtsXvuRqnyDC+TrMKPCIQ1KJUlfC//JAdEcath1ZxXtf2bB/VepPYZINTvzrmOqQpVsB3c7nTRfbYjwoPB498TF0uYPXguAxXYTEiYBEiXhrU5QKBgBQBZpJHOJlevxpixZIUpHqeTHhUSAPZGAgXHbGueCfPbWw7GtqNgnJkUE0QQObbo6/GaqEBrihHkzGH7ikcOr8fBD2g+YapP1zys0ZBut2oLgpFxpvOJWcpqnMFAurpYd0KmfvPa0wDHRENmH3N7KAjYQGg0Fd5QHCZULftAgeNAoGBAKbP0T64yl950lGwDBtHO/NpkWE+7sARHlxs+KqEUINpaBCJ2THIE+AeatVWLKUhzX/aHqv7dFYdMo2TBiA+ODNOaB8hX1FtSJxgL4Q79Rm6eyUUbdXmIs3OBE9znjvhebd/aViUak4A3EVE0YNermhvuNvvXCvX/0cXSiUKtODZAoGADK4tUwaJ4HfqZHMpMQC69EwTPL6WC076cVcsqjs5ZMGaQ+bKTdUGRGPcFl9nuW+11F2zqny5tJ98F3JChcgOObIHrNPk4Oqaqvq5of3rjOMsjd6N1bGMcowbqYQs+UneqmI/6xnnPhhAoKr43S+wpy0WoYynFCRqnquPitSNTOo=
+    private-key-path:
+    alipay-public-key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApkdrQzi5xg/nhjonNDgpEwnoIUftTZgq4yE+GvCZ1xaF5huPuaVdplLjV/HhOxVKpRcdQ4eeqXU41SHhSgZOQgkUTp3jtb3aHQnd12vwxYheaeXnFCL9Jj3EeWgkVxAequQsbc/UiPdeJjRwZ/aCnW45Q300t/KwbSZ5o+yvpeerx34jdafqkTGUfH9oZ2EIpHToGTlHfzbui352u2C9DvgrPdh75hl5louvi7BAlBqYaE/NrF6lUbO6p4iw3Y7EoSfncWItpDhWZLwkr682BtSkNtwv7E++Td2RTH/S0aCwZecC/PVHRtkpL1h5tR/vYvJNhZZ9OAN4+WyF/HRRVwIDAQAB
+    app-cert-path:
+    alipay-public-cert-path:
+    alipay-root-cert-path:
+    # 注意：必须有 /api 前缀（nginx 会剥掉 /api 再转给后端）
+    notify-url: https://desire.wang/api/pay/alipay/notify
+    return-url: https://desire.wang/pay/alipay/return
+    charset: UTF-8
+    sign-type: RSA2
+    timeout-express: 30m

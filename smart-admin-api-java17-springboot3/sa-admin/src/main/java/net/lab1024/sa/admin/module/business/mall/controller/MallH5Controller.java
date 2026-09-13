@@ -12,6 +12,11 @@ import net.lab1024.sa.admin.module.business.mall.domain.form.MallCreateOrderForm
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallLoginForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallPayProofForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallRegisterForm;
+import net.lab1024.sa.admin.module.business.mall.domain.form.MallWechatPrepayForm;
+import net.lab1024.sa.admin.module.business.mall.domain.vo.MallAlipayPayVO;
+import net.lab1024.sa.admin.module.business.mall.domain.vo.MallWechatPayVO;
+import net.lab1024.sa.admin.module.business.mall.service.MallAlipayPayService;
+import net.lab1024.sa.admin.module.business.mall.service.MallWechatPayService;
 import net.lab1024.sa.admin.module.business.mall.domain.vo.MallAddressVO;
 import net.lab1024.sa.admin.module.business.mall.domain.vo.MallCommissionVO;
 import net.lab1024.sa.admin.module.business.mall.domain.vo.MallConfigVO;
@@ -27,6 +32,9 @@ import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.module.support.file.domain.vo.FileUploadVO;
 import net.lab1024.sa.base.module.support.repeatsubmit.annoation.RepeatSubmit;
+import cn.hutool.extra.servlet.JakartaServletUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,6 +57,12 @@ public class MallH5Controller {
 
     @Resource
     private MallOrderService mallOrderService;
+
+    @Resource
+    private MallWechatPayService mallWechatPayService;
+
+    @Resource
+    private MallAlipayPayService mallAlipayPayService;
 
     @NoNeedLogin
     @Operation(summary = "商城配置", description = "含支付超时、同时抢购人数、商家微信/支付宝收款码（待付款页展示）")
@@ -141,6 +155,55 @@ public class MallH5Controller {
     @GetMapping("/mall/h5/order/{orderId}")
     public ResponseDTO<MallOrderVO> orderDetail(@PathVariable Long orderId) {
         return mallOrderService.detail(orderId, false);
+    }
+
+    @NoNeedLogin
+    @Operation(summary = "秒杀单拉起微信支付")
+    @PostMapping("/mall/h5/order/wechat/prepay")
+    @RepeatSubmit
+    public ResponseDTO<MallWechatPayVO> wechatPrepay(@RequestBody @Valid MallWechatPrepayForm form, HttpServletRequest request) {
+        if (StringUtils.isBlank(form.getClientIp())) {
+            form.setClientIp(JakartaServletUtil.getClientIP(request));
+        }
+        return mallWechatPayService.prepay(form);
+    }
+
+    @NoNeedLogin
+    @Operation(summary = "演示模式模拟微信支付成功")
+    @PostMapping("/mall/h5/order/wechat/mock-pay/{orderId}")
+    @RepeatSubmit
+    public ResponseDTO<String> wechatMockPay(@PathVariable Long orderId) {
+        return mallWechatPayService.mockPay(orderId);
+    }
+
+    @NoNeedLogin
+    @Operation(summary = "微信网页授权地址")
+    @GetMapping("/mall/h5/wechat/oauth-url")
+    public ResponseDTO<String> wechatOauthUrl(@RequestParam String redirectUri, @RequestParam(required = false) String state) {
+        return mallWechatPayService.oauthUrl(redirectUri, state);
+    }
+
+    @NoNeedLogin
+    @Operation(summary = "微信网页授权换 openid")
+    @GetMapping("/mall/h5/wechat/oauth")
+    public ResponseDTO<String> wechatOauth(@RequestParam String code) {
+        return mallWechatPayService.oauthCallback(code);
+    }
+
+    @NoNeedLogin
+    @Operation(summary = "秒杀单拉起支付宝支付")
+    @PostMapping("/mall/h5/order/alipay/prepay")
+    @RepeatSubmit
+    public ResponseDTO<MallAlipayPayVO> alipayPrepay(@RequestBody @Valid MallWechatPrepayForm form) {
+        return mallAlipayPayService.prepay(form);
+    }
+
+    @NoNeedLogin
+    @Operation(summary = "演示模式模拟支付宝支付成功")
+    @PostMapping("/mall/h5/order/alipay/mock-pay/{orderId}")
+    @RepeatSubmit
+    public ResponseDTO<String> alipayMockPay(@PathVariable Long orderId) {
+        return mallAlipayPayService.mockPay(orderId);
     }
 
     @NoNeedLogin

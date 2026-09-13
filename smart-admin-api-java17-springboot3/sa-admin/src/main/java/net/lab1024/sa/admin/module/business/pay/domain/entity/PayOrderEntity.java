@@ -23,6 +23,11 @@ public class PayOrderEntity {
     private String orderNo;
 
     /**
+     * 关联秒杀订单，独立后台收款可为空
+     */
+    private Long mallOrderId;
+
+    /**
      * 商品描述
      */
     private String description;
@@ -31,6 +36,11 @@ public class PayOrderEntity {
      * 订单金额，单位分
      */
     private Integer amount;
+
+    /**
+     * 支付渠道 1微信 2支付宝
+     */
+    private Integer payChannel;
 
     /**
      * 支付方式

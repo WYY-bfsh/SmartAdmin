@@ -18,6 +18,12 @@
   <a-card size="small" :bordered="false">
     <a-table size="small" :loading="tableLoading" :dataSource="tableData" :columns="columns" rowKey="orderId" bordered :pagination="false">
       <template #bodyCell="{ record, column }">
+        <template v-if="column.dataIndex === 'payChannel'">
+          <a-tag v-if="record.payChannel === 20" color="green">微信</a-tag>
+          <a-tag v-else-if="record.payChannel === 30" color="blue">支付宝</a-tag>
+          <a-tag v-else-if="record.payChannel === 10">收款码</a-tag>
+          <span v-else>-</span>
+        </template>
         <template v-if="column.dataIndex === 'orderStatus'">
           <a-tag>{{ $smartEnumPlugin.getDescByValue('MALL_ORDER_STATUS_ENUM', record.orderStatus) }}</a-tag>
         </template>
@@ -25,6 +31,20 @@
           <a-button type="link" v-if="record.orderStatus === 15" @click="openConfirm(record)" v-privilege="'mall:order:ship'">确认收款</a-button>
           <a-button type="link" danger v-if="record.orderStatus === 15" @click="openReject(record)" v-privilege="'mall:order:ship'">拒绝</a-button>
           <a-button type="link" v-if="record.orderStatus === 20" @click="openShip(record)" v-privilege="'mall:order:ship'">发货</a-button>
+          <a-button
+            type="link"
+            danger
+            v-if="record.payChannel === 20 && (record.orderStatus === 20 || record.orderStatus === 30)"
+            @click="openRefund(record)"
+            v-privilege="'mall:order:ship'"
+          >微信退款</a-button>
+          <a-button
+            type="link"
+            danger
+            v-if="record.payChannel === 30 && (record.orderStatus === 20 || record.orderStatus === 30)"
+            @click="openAlipayRefund(record)"
+            v-privilege="'mall:order:ship'"
+          >支付宝退款</a-button>
           <a-button type="link" @click="openDetail(record)">物流</a-button>
         </template>
       </template>
@@ -82,7 +102,7 @@
 </style>
 <script setup>
   import { computed, onMounted, reactive, ref } from 'vue';
-  import { message } from 'ant-design-vue';
+  import { Modal, message } from 'ant-design-vue';
   import { mallAdminApi } from '/@/api/business/mall/mall-admin-api';
   import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
   import { smartSentry } from '/@/lib/smart-sentry';
@@ -92,12 +112,13 @@
     { title: '订单号', dataIndex: 'orderNo', width: 220 },
     { title: '商品', dataIndex: 'goodsName' },
     { title: '金额', dataIndex: 'amount', width: 90 },
+    { title: '支付', dataIndex: 'payChannel', width: 80 },
     { title: '收货人', dataIndex: 'receiverName', width: 90 },
     { title: '电话', dataIndex: 'receiverPhone', width: 120 },
     { title: '快递', dataIndex: 'expressName', width: 100 },
     { title: '运单号', dataIndex: 'waybillNo', width: 160 },
     { title: '状态', dataIndex: 'orderStatus', width: 90 },
-    { title: '操作', dataIndex: 'action', width: 220 },
+    { title: '操作', dataIndex: 'action', width: 280 },
   ];
   const queryForm = reactive({ orderNo: '', orderStatus: undefined, waybillNo: '', pageNum: 1, pageSize: 10 });
   const tableData = ref([]);
@@ -169,6 +190,34 @@
     } catch (e) {
       smartSentry.captureError(e);
     }
+  }
+
+  function openAlipayRefund(record) {
+    Modal.confirm({
+      title: '支付宝退款并关单',
+      content: '将原路退回支付宝，关闭订单、回库存，并取消待结算佣金。',
+      okText: '确认退款',
+      okType: 'danger',
+      async onOk() {
+        await mallAdminApi.alipayRefund(record.orderId, { remark: '商家支付宝退款关单' });
+        message.success('已退款关单');
+        queryData();
+      },
+    });
+  }
+
+  function openRefund(record) {
+    Modal.confirm({
+      title: '微信退款并关单',
+      content: '将原路退回微信，关闭订单、回库存，并取消待结算佣金。',
+      okText: '确认退款',
+      okType: 'danger',
+      async onOk() {
+        await mallAdminApi.wechatRefund(record.orderId, { remark: '商家微信退款关单' });
+        message.success('已退款关单');
+        queryData();
+      },
+    });
   }
 
   function openShip(record) {

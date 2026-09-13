@@ -2,6 +2,7 @@ package net.lab1024.sa.admin.module.business.pay.domain.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import net.lab1024.sa.admin.module.business.pay.constant.PayChannelEnum;
 import net.lab1024.sa.admin.module.business.pay.constant.PayStatusEnum;
 import net.lab1024.sa.admin.module.business.pay.constant.PayTradeTypeEnum;
 import net.lab1024.sa.base.common.swagger.SchemaEnum;
@@ -29,6 +30,10 @@ public class PayOrderVO {
 
     @Schema(description = "订单金额（元）")
     private BigDecimal amountYuan;
+
+    @SchemaEnum(PayChannelEnum.class)
+    @Schema(description = "支付渠道")
+    private Integer payChannel;
 
     @SchemaEnum(PayTradeTypeEnum.class)
     private Integer tradeType;

@@ -30,6 +30,8 @@ public class MallMemberEntity {
 
     private String wechatReceiveQr;
 
+    private String wechatOpenid;
+
     private Boolean deletedFlag;
 
     private LocalDateTime updateTime;
