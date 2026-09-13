@@ -10,6 +10,7 @@ import net.lab1024.sa.admin.module.business.mall.domain.form.MallAddressForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallCommissionQueryForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallCreateOrderForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallLoginForm;
+import net.lab1024.sa.admin.module.business.mall.domain.form.MallPayProofForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.MallRegisterForm;
 import net.lab1024.sa.admin.module.business.mall.domain.vo.MallAddressVO;
 import net.lab1024.sa.admin.module.business.mall.domain.vo.MallCommissionVO;
@@ -37,7 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@Tag(name = AdminSwaggerTagConst.Business.MALL_H5)
+@Tag(name = AdminSwaggerTagConst.Business.MALL_H5, description = "用户端 H5：注册登录、秒杀、下单与付款凭证")
 public class MallH5Controller {
 
     @Resource
@@ -50,61 +51,70 @@ public class MallH5Controller {
     private MallOrderService mallOrderService;
 
     @NoNeedLogin
-    @Operation(summary = "商城配置")
+    @Operation(summary = "商城配置", description = "含支付超时、同时抢购人数、商家微信/支付宝收款码（待付款页展示）")
     @GetMapping("/mall/h5/config")
     public ResponseDTO<MallConfigVO> config() {
         return ResponseDTO.ok(seckillActivityService.config());
     }
 
     @NoNeedLogin
+    @Operation(summary = "上传图片", description = "头像、会员收款码、付款截图共用")
     @PostMapping("/mall/h5/avatar/upload")
     public ResponseDTO<FileUploadVO> uploadAvatar(@RequestParam("file") MultipartFile file) {
         return mallMemberService.uploadAvatar(file);
     }
 
     @NoNeedLogin
+    @Operation(summary = "手机号注册", description = "邀请码必填且须为已有会员邀请码；注册时设置密码；短信验证码暂未启用")
     @PostMapping("/mall/h5/register")
     public ResponseDTO<MallMemberVO> register(@RequestBody @Valid MallRegisterForm form) {
         return mallMemberService.register(form);
     }
 
     @NoNeedLogin
+    @Operation(summary = "账号密码登录", description = "账号为 11 位手机号")
     @PostMapping("/mall/h5/login")
     public ResponseDTO<MallMemberVO> login(@RequestBody @Valid MallLoginForm form) {
         return mallMemberService.login(form);
     }
 
     @NoNeedLogin
+    @Operation(summary = "当前会员信息")
     @GetMapping("/mall/h5/me")
     public ResponseDTO<MallMemberVO> me() {
         return mallMemberService.me();
     }
 
     @NoNeedLogin
+    @Operation(summary = "秒杀活动列表", description = "H5 倒计时按未结束场次的最早开始时间计算；开售前 30 分钟可预览")
     @GetMapping("/mall/h5/activity/list")
     public ResponseDTO<List<SeckillActivityVO>> activityList() {
         return seckillActivityService.listForH5();
     }
 
     @NoNeedLogin
+    @Operation(summary = "秒杀活动详情", description = "saleStatus：10未开始仅预览，20进行中可下单，30已结束/售罄")
     @GetMapping("/mall/h5/activity/{activityId}")
     public ResponseDTO<SeckillActivityVO> activityDetail(@PathVariable Long activityId) {
         return seckillActivityService.detail(activityId);
     }
 
     @NoNeedLogin
+    @Operation(summary = "收货地址列表")
     @GetMapping("/mall/h5/address/list")
     public ResponseDTO<List<MallAddressVO>> addressList() {
         return mallMemberService.listAddress();
     }
 
     @NoNeedLogin
+    @Operation(summary = "保存收货地址")
     @PostMapping("/mall/h5/address/save")
     public ResponseDTO<String> saveAddress(@RequestBody @Valid MallAddressForm form) {
         return mallMemberService.saveAddress(form);
     }
 
     @NoNeedLogin
+    @Operation(summary = "创建秒杀订单", description = "一单一种商品，qty 自选且不超过每人限购与库存；下单后状态=待付款(10)")
     @PostMapping("/mall/h5/order/create")
     @RepeatSubmit
     public ResponseDTO<MallOrderVO> createOrder(@RequestBody @Valid MallCreateOrderForm form) {
@@ -112,37 +122,43 @@ public class MallH5Controller {
     }
 
     @NoNeedLogin
-    @PostMapping("/mall/h5/order/pay/{orderId}")
+    @Operation(summary = "提交付款凭证", description = "待付款订单上传截图与说明后变为待商家确认(15)，不再直接标记已支付")
+    @PostMapping("/mall/h5/order/pay-proof")
     @RepeatSubmit
-    public ResponseDTO<MallOrderVO> pay(@PathVariable Long orderId) {
-        return mallOrderService.mockPay(orderId);
+    public ResponseDTO<MallOrderVO> payProof(@RequestBody @Valid MallPayProofForm form) {
+        return mallOrderService.submitPayProof(form);
     }
 
     @NoNeedLogin
+    @Operation(summary = "我的订单列表")
     @GetMapping("/mall/h5/order/list")
     public ResponseDTO<List<MallOrderVO>> orderList(@RequestParam(required = false) Integer orderStatus) {
         return mallOrderService.listMine(orderStatus);
     }
 
     @NoNeedLogin
+    @Operation(summary = "订单详情", description = "待付款需同时调 /mall/h5/config 取商家收款码")
     @GetMapping("/mall/h5/order/{orderId}")
     public ResponseDTO<MallOrderVO> orderDetail(@PathVariable Long orderId) {
         return mallOrderService.detail(orderId, false);
     }
 
     @NoNeedLogin
+    @Operation(summary = "确认收货")
     @PostMapping("/mall/h5/order/receive/{orderId}")
     public ResponseDTO<String> receive(@PathVariable Long orderId) {
         return mallOrderService.confirmReceive(orderId);
     }
 
     @NoNeedLogin
+    @Operation(summary = "我的分销佣金")
     @PostMapping("/mall/h5/commission/query")
     public ResponseDTO<PageResult<MallCommissionVO>> myCommission(@RequestBody @Valid MallCommissionQueryForm queryForm) {
         return mallOrderService.queryCommission(queryForm, true);
     }
 
     @NoNeedLogin
+    @Operation(summary = "我的团队")
     @GetMapping("/mall/h5/team")
     public ResponseDTO<List<MallMemberVO>> team() {
         ResponseDTO<List<MallMemberEntity>> res = mallOrderService.myTeam();

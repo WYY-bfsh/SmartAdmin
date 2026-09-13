@@ -1,5 +1,7 @@
+/** 订单状态：10 待付款 → 15 待商家确认 → 20 待发货 → 30 已发货 → 40 已完成 / 50 关闭 */
 export const MALL_ORDER_STATUS_ENUM = {
   WAIT_PAY: { value: 10, desc: '待付款' },
+  WAIT_CONFIRM: { value: 15, desc: '待商家确认' },
   WAIT_SHIP: { value: 20, desc: '待发货' },
   SHIPPED: { value: 30, desc: '已发货' },
   COMPLETED: { value: 40, desc: '已完成' },
@@ -8,6 +10,7 @@ export const MALL_ORDER_STATUS_ENUM = {
 
 export const MALL_PAY_STATUS_ENUM = {
   WAIT_PAY: { value: 10, desc: '待支付' },
+  WAIT_CONFIRM: { value: 15, desc: '待确认' },
   PAID: { value: 20, desc: '已支付' },
   CLOSED: { value: 30, desc: '已关闭' },
 };

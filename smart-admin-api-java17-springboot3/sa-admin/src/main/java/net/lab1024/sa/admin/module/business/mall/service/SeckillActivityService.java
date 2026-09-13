@@ -4,7 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
 import net.lab1024.sa.admin.module.business.mall.config.MallProperties;
+import net.lab1024.sa.admin.module.business.mall.dao.MallSettingDao;
 import net.lab1024.sa.admin.module.business.mall.dao.SeckillActivityDao;
+import net.lab1024.sa.admin.module.business.mall.domain.entity.MallSettingEntity;
+import net.lab1024.sa.admin.module.business.mall.domain.form.MallSettingForm;
 import net.lab1024.sa.admin.module.business.mall.domain.entity.SeckillActivityEntity;
 import net.lab1024.sa.admin.module.business.mall.domain.form.SeckillActivityForm;
 import net.lab1024.sa.admin.module.business.mall.domain.form.SeckillActivityQueryForm;
@@ -35,6 +38,9 @@ public class SeckillActivityService {
     private SeckillActivityDao seckillActivityDao;
 
     @Resource
+    private MallSettingDao mallSettingDao;
+
+    @Resource
     private MallProperties mallProperties;
 
     @Resource
@@ -49,7 +55,44 @@ public class SeckillActivityService {
         vo.setKuaidi100Enabled(StringUtils.isNotBlank(mallProperties.getExpress().getKuaidi100Key())
                 && StringUtils.isNotBlank(mallProperties.getExpress().getKuaidi100Customer()));
         vo.setH5Path("http://175.27.131.7/");
+        fillMerchantQr(vo);
         return vo;
+    }
+
+    public boolean hasMerchantPayQr() {
+        MallConfigVO vo = config();
+        return StringUtils.isNotBlank(vo.getMerchantWechatQr()) || StringUtils.isNotBlank(vo.getMerchantAlipayQr());
+    }
+
+    /**
+     * 保存待付款页展示的商家微信/支付宝收款码。
+     */
+    public ResponseDTO<String> saveSetting(MallSettingForm form) {
+        mallSeedService.ensureReady();
+        MallSettingEntity entity = requireSetting();
+        entity.setMerchantWechatQr(StringUtils.trimToNull(form.getMerchantWechatQr()));
+        entity.setMerchantAlipayQr(StringUtils.trimToNull(form.getMerchantAlipayQr()));
+        mallSettingDao.updateById(entity);
+        return ResponseDTO.ok();
+    }
+
+    private void fillMerchantQr(MallConfigVO vo) {
+        MallSettingEntity setting = requireSetting();
+        vo.setMerchantWechatQr(setting.getMerchantWechatQr());
+        vo.setMerchantAlipayQr(setting.getMerchantAlipayQr());
+    }
+
+    private MallSettingEntity requireSetting() {
+        mallSeedService.ensureReady();
+        MallSettingEntity entity = mallSettingDao.selectById(1L);
+        if (entity != null) {
+            return entity;
+        }
+        entity = new MallSettingEntity();
+        entity.setSettingId(1L);
+        entity.setCreateTime(LocalDateTime.now());
+        mallSettingDao.insert(entity);
+        return entity;
     }
 
     public ResponseDTO<PageResult<SeckillActivityVO>> query(SeckillActivityQueryForm queryForm) {

@@ -143,17 +143,17 @@ public class MallMemberService {
         };
     }
 
+    /**
+     * 手机号注册。邀请码必填，绑定上级会员；密码 MD5 存储。
+     */
     public ResponseDTO<MallMemberVO> register(MallRegisterForm form) {
         ensureReady();
         if (mallMemberDao.selectByPhone(form.getPhone()) != null) {
             return ResponseDTO.userErrorParam("该手机号已注册");
         }
-        MallMemberEntity parent = null;
-        if (StringUtils.isNotBlank(form.getInviteCode())) {
-            parent = mallMemberDao.selectByInviteCode(form.getInviteCode().trim().toUpperCase());
-            if (parent == null) {
-                return ResponseDTO.userErrorParam("邀请码无效");
-            }
+        MallMemberEntity parent = mallMemberDao.selectByInviteCode(form.getInviteCode().trim().toUpperCase());
+        if (parent == null) {
+            return ResponseDTO.userErrorParam("邀请码无效");
         }
         MallMemberEntity entity = new MallMemberEntity();
         entity.setPhone(form.getPhone());
@@ -163,7 +163,7 @@ public class MallMemberService {
         entity.setWechatPayQr(StringUtils.trimToNull(form.getWechatPayQr()));
         entity.setWechatReceiveQr(StringUtils.trimToNull(form.getWechatReceiveQr()));
         entity.setInviteCode(nextInviteCode());
-        entity.setParentMemberId(parent == null ? null : parent.getMemberId());
+        entity.setParentMemberId(parent.getMemberId());
         entity.setDeletedFlag(Boolean.FALSE);
         entity.setCreateTime(LocalDateTime.now());
         mallMemberDao.insert(entity);

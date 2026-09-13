@@ -64,6 +64,16 @@ public class MallOrderEntity {
 
     private String remark;
 
+    /**
+     * 用户上传的付款截图，待付款提交后写入。
+     */
+    private String payProofUrl;
+
+    /**
+     * 用户填写的付款说明。
+     */
+    private String payNote;
+
     private Boolean deletedFlag;
 
     private LocalDateTime updateTime;

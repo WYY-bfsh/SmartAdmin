@@ -1,19 +1,23 @@
 <template>
+  <!-- 订单 Tab：未登录弹层；含待付款/待确认/待发货等筛选 -->
   <view class="page">
-    <view class="tabs">
-      <view v-for="tab in tabs" :key="String(tab.value)" :class="{ on: status === tab.value }" @click="change(tab.value)">
-        {{ tab.label }}
+    <template v-if="authed">
+      <view class="tabs">
+        <view v-for="tab in tabs" :key="String(tab.value)" :class="{ on: status === tab.value }" @click="change(tab.value)">
+          {{ tab.label }}
+        </view>
       </view>
-    </view>
-    <view class="card" v-for="item in list" :key="item.orderId" @click="goDetail(item.orderId)">
-      <view class="row">
-        <text>{{ item.orderNo }}</text>
-        <text class="st">{{ statusText(item.orderStatus) }}</text>
+      <view class="card" v-for="item in list" :key="item.orderId" @click="goDetail(item.orderId)">
+        <view class="row">
+          <text>{{ item.orderNo }}</text>
+          <text class="st">{{ statusText(item.orderStatus) }}</text>
+        </view>
+        <view class="goods">{{ item.goodsName }} × {{ item.qty }}</view>
+        <view class="price">¥{{ item.amount }}</view>
       </view>
-      <view class="goods">{{ item.goodsName }} × {{ item.qty }}</view>
-      <view class="price">¥{{ item.amount }}</view>
-    </view>
-    <view v-if="!list.length" class="empty">暂无订单</view>
+      <view v-if="!list.length" class="empty">暂无订单</view>
+    </template>
+    <mall-login-popup v-model="showLogin" @success="onLoginSuccess" />
   </view>
 </template>
 
@@ -21,16 +25,20 @@
   import { ref } from 'vue';
   import { onShow } from '@dcloudio/uni-app';
   import { mallH5Api, getMallToken, MALL_ORDER_STATUS } from '@/api/business/mall/mall-h5-api';
+  import MallLoginPopup from '@/components/mall-login-popup/index.vue';
 
   const tabs = [
     { label: '全部', value: undefined },
     { label: '待付款', value: 10 },
+    { label: '待确认', value: 15 },
     { label: '待发货', value: 20 },
     { label: '已发货', value: 30 },
     { label: '已完成', value: 40 },
   ];
   const status = ref();
   const list = ref([]);
+  const authed = ref(false);
+  const showLogin = ref(false);
 
   function statusText(v) {
     return MALL_ORDER_STATUS[v] || '';
@@ -38,16 +46,23 @@
 
   async function load() {
     if (!getMallToken()) {
+      authed.value = false;
+      showLogin.value = true;
       list.value = [];
-      uni.navigateTo({ url: '/pages/mall/login' });
       return;
     }
+    authed.value = true;
+    showLogin.value = false;
     try {
       const res = await mallH5Api.orderList(status.value);
       list.value = res.data || [];
     } catch (e) {
       list.value = [];
     }
+  }
+
+  function onLoginSuccess() {
+    load();
   }
 
   function change(v) {

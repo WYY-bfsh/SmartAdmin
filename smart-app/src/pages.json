@@ -10,15 +10,23 @@
 		{
 			"path": "pages/mall/index",
 			"style": {
-				"navigationBarTitleText": "首页",
-				"navigationBarBackgroundColor": "#fff",
-				"navigationBarTextStyle": "black"
+				"navigationBarTitleText": "臻品荟",
+				"navigationBarBackgroundColor": "#1c140c",
+				"navigationBarTextStyle": "white"
 			}
 		},
 		{
 			"path": "pages/mall/home",
 			"style": {
 				"navigationBarTitleText": "抢购",
+				"navigationBarBackgroundColor": "#ee0a24",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/mall/seckill-goods",
+			"style": {
+				"navigationBarTitleText": "秒杀商品",
 				"navigationBarBackgroundColor": "#ee0a24",
 				"navigationBarTextStyle": "white"
 			}

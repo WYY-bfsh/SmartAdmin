@@ -18,10 +18,7 @@ import net.lab1024.sa.admin.module.business.mall.domain.entity.MallCommissionEnt
 import net.lab1024.sa.admin.module.business.mall.domain.entity.MallMemberEntity;
 import net.lab1024.sa.admin.module.business.mall.domain.entity.MallOrderEntity;
 import net.lab1024.sa.admin.module.business.mall.domain.entity.SeckillActivityEntity;
-import net.lab1024.sa.admin.module.business.mall.domain.form.MallCommissionQueryForm;
-import net.lab1024.sa.admin.module.business.mall.domain.form.MallCreateOrderForm;
-import net.lab1024.sa.admin.module.business.mall.domain.form.MallOrderQueryForm;
-import net.lab1024.sa.admin.module.business.mall.domain.form.MallShipForm;
+import net.lab1024.sa.admin.module.business.mall.domain.form.*;
 import net.lab1024.sa.admin.module.business.mall.domain.vo.MallCommissionVO;
 import net.lab1024.sa.admin.module.business.mall.domain.vo.MallOrderVO;
 import net.lab1024.sa.admin.module.business.mall.domain.vo.SeckillActivityVO;
@@ -40,6 +37,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * 秒杀订单：下单待付款 → 提交凭证待确认 → 后台确认后待发货。
+ */
 @Service
 public class MallOrderService {
 
@@ -92,14 +92,15 @@ public class MallOrderService {
         }
         int bought = mallOrderDao.countValidByMemberActivity(member.getMemberId(), activity.getActivityId());
         int limit = activity.getPerLimit() == null ? 1 : activity.getPerLimit();
-        if (bought + form.getQty() > limit) {
+        int qty = form.getQty() == null ? 1 : form.getQty();
+        if (bought + qty > limit) {
             return ResponseDTO.userErrorParam("超过每人限购 " + limit + " 件");
         }
         MallAddressEntity address = mallAddressDao.selectById(form.getAddressId());
         if (address == null || !address.getMemberId().equals(member.getMemberId()) || Boolean.TRUE.equals(address.getDeletedFlag())) {
             return ResponseDTO.userErrorParam("请选择有效收货地址");
         }
-        int rows = seckillActivityDao.deductStock(activity.getActivityId(), form.getQty());
+        int rows = seckillActivityDao.deductStock(activity.getActivityId(), qty);
         if (rows <= 0) {
             return ResponseDTO.userErrorParam("库存不足");
         }
@@ -109,9 +110,9 @@ public class MallOrderService {
         order.setActivityId(activity.getActivityId());
         order.setGoodsName(activity.getGoodsName());
         order.setCoverUrl(activity.getCoverUrl());
-        order.setQty(form.getQty());
+        order.setQty(qty);
         order.setPrice(activity.getSeckillPrice());
-        order.setAmount(activity.getSeckillPrice().multiply(BigDecimal.valueOf(form.getQty())).setScale(2, RoundingMode.HALF_UP));
+        order.setAmount(activity.getSeckillPrice().multiply(BigDecimal.valueOf(qty)).setScale(2, RoundingMode.HALF_UP));
         order.setPayStatus(MallPayStatusEnum.WAIT_PAY.getValue());
         order.setOrderStatus(MallOrderStatusEnum.WAIT_PAY.getValue());
         order.setReceiverName(address.getReceiverName());
@@ -125,18 +126,72 @@ public class MallOrderService {
         return ResponseDTO.ok(toVo(order, false));
     }
 
+    /**
+     * 提交付款截图，订单从待付款(10)变为待商家确认(15)。
+     * 必须仍是待付款且未超时；与超时关单用条件更新互斥，避免回库存后又交凭证。
+     */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseDTO<MallOrderVO> mockPay(Long orderId) {
-        MallOrderEntity order = requireOwnOrder(orderId);
-        if (!MallOrderStatusEnum.WAIT_PAY.equalsValue(order.getOrderStatus())) {
-            return ResponseDTO.userErrorParam("当前订单不是待付款状态");
+    public ResponseDTO<MallOrderVO> submitPayProof(MallPayProofForm form) {
+        MallOrderEntity order = requireOwnOrder(form.getOrderId());
+        if (!seckillActivityService.hasMerchantPayQr()) {
+            return ResponseDTO.userErrorParam("商家尚未配置收款码，暂不能提交付款凭证");
         }
-        order.setPayStatus(MallPayStatusEnum.PAID.getValue());
-        order.setOrderStatus(MallOrderStatusEnum.WAIT_SHIP.getValue());
-        order.setPayTime(LocalDateTime.now());
-        mallOrderDao.updateById(order);
-        freezeCommission(order);
-        return ResponseDTO.ok(toVo(order, false));
+        if (StringUtils.isBlank(form.getPayProofUrl())) {
+            return ResponseDTO.userErrorParam("请上传付款截图");
+        }
+        if (order.getExpireTime() != null && !LocalDateTime.now().isBefore(order.getExpireTime())) {
+            closeWaitPayAndRestore(order);
+            return ResponseDTO.userErrorParam("支付已超时，订单已关闭");
+        }
+        int rows = mallOrderDao.submitProofIfWaitPay(
+                order.getOrderId(),
+                form.getPayProofUrl().trim(),
+                StringUtils.trimToNull(form.getPayNote()));
+        if (rows <= 0) {
+            return ResponseDTO.userErrorParam("当前订单不是待付款状态或已超时");
+        }
+        return ResponseDTO.ok(toVo(mallOrderDao.selectById(order.getOrderId()), false));
+    }
+
+    /**
+     * 商家确认已收到转账，订单变为待发货并冻结分销佣金。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseDTO<String> confirmPay(Long orderId) {
+        mallSeedService.ensureReady();
+        MallOrderEntity order = mallOrderDao.selectById(orderId);
+        if (order == null || Boolean.TRUE.equals(order.getDeletedFlag())) {
+            return ResponseDTO.userErrorParam("订单不存在");
+        }
+        if (StringUtils.isBlank(order.getPayProofUrl())) {
+            return ResponseDTO.userErrorParam("用户尚未上传付款截图");
+        }
+        int rows = mallOrderDao.confirmPayIfWaitConfirm(orderId);
+        if (rows <= 0) {
+            return ResponseDTO.userErrorParam("当前订单不是待商家确认状态");
+        }
+        MallOrderEntity latest = mallOrderDao.selectById(orderId);
+        freezeCommission(latest);
+        return ResponseDTO.ok();
+    }
+
+    /**
+     * 拒绝付款凭证：关单并回库存，限购占用解除。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseDTO<String> rejectPay(MallRejectPayForm form) {
+        mallSeedService.ensureReady();
+        MallOrderEntity order = mallOrderDao.selectById(form.getOrderId());
+        if (order == null || Boolean.TRUE.equals(order.getDeletedFlag())) {
+            return ResponseDTO.userErrorParam("订单不存在");
+        }
+        String remark = StringUtils.defaultIfBlank(StringUtils.trimToNull(form.getRemark()), "商家拒绝收款凭证");
+        int rows = mallOrderDao.rejectPayIfWaitConfirm(order.getOrderId(), remark);
+        if (rows <= 0) {
+            return ResponseDTO.userErrorParam("当前订单不是待商家确认状态");
+        }
+        seckillActivityDao.restoreStock(order.getActivityId(), order.getQty());
+        return ResponseDTO.ok();
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -235,14 +290,20 @@ public class MallOrderService {
                 .le(MallOrderEntity::getExpireTime, LocalDateTime.now()));
         int count = 0;
         for (MallOrderEntity order : list) {
-            order.setOrderStatus(MallOrderStatusEnum.CLOSED.getValue());
-            order.setPayStatus(MallPayStatusEnum.CLOSED.getValue());
-            order.setCloseTime(LocalDateTime.now());
-            mallOrderDao.updateById(order);
-            seckillActivityDao.restoreStock(order.getActivityId(), order.getQty());
-            count++;
+            if (closeWaitPayAndRestore(order)) {
+                count++;
+            }
         }
         return count;
+    }
+
+    private boolean closeWaitPayAndRestore(MallOrderEntity order) {
+        int rows = mallOrderDao.closeIfWaitPayExpired(order.getOrderId());
+        if (rows <= 0) {
+            return false;
+        }
+        seckillActivityDao.restoreStock(order.getActivityId(), order.getQty());
+        return true;
     }
 
     private void completeOrder(MallOrderEntity order) {

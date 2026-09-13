@@ -22,6 +22,8 @@
           <a-tag>{{ $smartEnumPlugin.getDescByValue('MALL_ORDER_STATUS_ENUM', record.orderStatus) }}</a-tag>
         </template>
         <template v-if="column.dataIndex === 'action'">
+          <a-button type="link" v-if="record.orderStatus === 15" @click="openConfirm(record)" v-privilege="'mall:order:ship'">确认收款</a-button>
+          <a-button type="link" danger v-if="record.orderStatus === 15" @click="openReject(record)" v-privilege="'mall:order:ship'">拒绝</a-button>
           <a-button type="link" v-if="record.orderStatus === 20" @click="openShip(record)" v-privilege="'mall:order:ship'">发货</a-button>
           <a-button type="link" @click="openDetail(record)">物流</a-button>
         </template>
@@ -31,6 +33,16 @@
       <a-pagination v-model:current="queryForm.pageNum" v-model:pageSize="queryForm.pageSize" :total="total" @change="queryData" show-size-changer />
     </div>
   </a-card>
+  <a-modal :open="rejectVisible" title="拒绝收款" ok-text="确认拒绝并关单" ok-type="danger" @ok="doRejectPay" @cancel="rejectVisible = false">
+    <p>拒绝后订单关闭并回库存，用户可重新下单。</p>
+    <a-textarea v-model:value="rejectRemark" :rows="3" placeholder="拒绝原因（选填）" />
+  </a-modal>
+  <a-modal :open="confirmVisible" title="确认收款" ok-text="确认已收款" @ok="doConfirmPay" @cancel="confirmVisible = false">
+    <p>核对付款截图与说明后，确认则订单进入待发货。</p>
+    <p>说明：{{ confirmOrder.payNote || '无' }}</p>
+    <a-image v-if="confirmOrder.payProofUrl" :src="proofUrl(confirmOrder.payProofUrl)" :width="240" />
+    <a-empty v-else description="未上传截图" />
+  </a-modal>
   <a-modal :open="shipVisible" title="真实发货" ok-text="确认发货" @ok="doShip" @cancel="shipVisible = false">
     <p>填写快递公司与运单号，买家即可按快递100结构查看轨迹。</p>
     <a-form :label-col="{ span: 6 }">
@@ -69,17 +81,43 @@
     { title: '快递', dataIndex: 'expressName', width: 100 },
     { title: '运单号', dataIndex: 'waybillNo', width: 160 },
     { title: '状态', dataIndex: 'orderStatus', width: 90 },
-    { title: '操作', dataIndex: 'action', width: 140 },
+    { title: '操作', dataIndex: 'action', width: 220 },
   ];
   const queryForm = reactive({ orderNo: '', orderStatus: undefined, waybillNo: '', pageNum: 1, pageSize: 10 });
   const tableData = ref([]);
   const total = ref(0);
   const tableLoading = ref(false);
   const shipVisible = ref(false);
+  const confirmVisible = ref(false);
+  const rejectVisible = ref(false);
+  const rejectRemark = ref('');
+  const rejectOrderId = ref();
+  const confirmOrder = reactive({});
   const traceVisible = ref(false);
   const traces = ref([]);
   const companies = ref([]);
   const shipForm = reactive({ orderId: undefined, expressCode: 'shunfeng', waybillNo: '' });
+
+  function proofUrl(url) {
+    if (!url) {
+      return '';
+    }
+    try {
+      const parsed = new URL(url, window.location.origin);
+      const idx = parsed.pathname.indexOf('/upload/');
+      const path = idx >= 0 ? parsed.pathname.substring(idx) : parsed.pathname;
+      if (path.startsWith('/upload/')) {
+        return `${window.location.protocol}//${window.location.hostname}${path}`;
+      }
+    } catch (e) {
+      const raw = String(url);
+      const idx = raw.indexOf('/upload/');
+      if (idx >= 0) {
+        return `${window.location.protocol}//${window.location.hostname}${raw.substring(idx)}`;
+      }
+    }
+    return url;
+  }
 
   async function queryData() {
     tableLoading.value = true;
@@ -97,6 +135,45 @@
     queryForm.pageNum = 1;
     queryData();
   }
+  async function openConfirm(record) {
+    confirmVisible.value = true;
+    Object.assign(confirmOrder, record, { payProofUrl: '', payNote: '' });
+    try {
+      const res = await mallAdminApi.orderDetail(record.orderId);
+      Object.assign(confirmOrder, res.data || record);
+    } catch (e) {
+      smartSentry.captureError(e);
+    }
+  }
+
+  async function doConfirmPay() {
+    try {
+      await mallAdminApi.confirmPay(confirmOrder.orderId);
+      message.success('已确认收款');
+      confirmVisible.value = false;
+      queryData();
+    } catch (e) {
+      smartSentry.captureError(e);
+    }
+  }
+
+  function openReject(record) {
+    rejectOrderId.value = record.orderId;
+    rejectRemark.value = '';
+    rejectVisible.value = true;
+  }
+
+  async function doRejectPay() {
+    try {
+      await mallAdminApi.rejectPay({ orderId: rejectOrderId.value, remark: rejectRemark.value });
+      message.success('已拒绝并关单');
+      rejectVisible.value = false;
+      queryData();
+    } catch (e) {
+      smartSentry.captureError(e);
+    }
+  }
+
   function openShip(record) {
     shipForm.orderId = record.orderId;
     shipForm.expressCode = 'shunfeng';

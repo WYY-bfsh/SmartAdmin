@@ -11,6 +11,26 @@
   </a-form>
   <a-card size="small" :bordered="false">
     <a-alert type="info" show-icon class="smart-margin-bottom10" :message="configTip" />
+    <a-card size="small" class="smart-margin-bottom10" title="商家收款码（待支付页展示）">
+      <a-row :gutter="16">
+        <a-col :span="12">
+          <div class="qr-title">微信收款码</div>
+          <a-image v-if="setting.merchantWechatQr" :src="fileUrl(setting.merchantWechatQr)" :width="140" :height="140" style="object-fit: contain" />
+          <div v-else class="qr-empty">未上传</div>
+          <a-upload :show-upload-list="false" :before-upload="beforeUpload" :custom-request="(opt) => uploadSetting('merchantWechatQr', opt)">
+            <a-button size="small" class="smart-margin-top10">上传微信收款码</a-button>
+          </a-upload>
+        </a-col>
+        <a-col :span="12">
+          <div class="qr-title">支付宝收款码</div>
+          <a-image v-if="setting.merchantAlipayQr" :src="fileUrl(setting.merchantAlipayQr)" :width="140" :height="140" style="object-fit: contain" />
+          <div v-else class="qr-empty">未上传</div>
+          <a-upload :show-upload-list="false" :before-upload="beforeUpload" :custom-request="(opt) => uploadSetting('merchantAlipayQr', opt)">
+            <a-button size="small" class="smart-margin-top10">上传支付宝收款码</a-button>
+          </a-upload>
+        </a-col>
+      </a-row>
+    </a-card>
     <a-row class="smart-table-btn-block">
       <a-button type="primary" @click="showEdit()" v-privilege="'mall:activity:save'">新建活动</a-button>
       <a-button style="margin-left: 8px" @click="openH5">打开用户端 H5</a-button>
@@ -54,6 +74,8 @@
   import { onMounted, reactive, ref } from 'vue';
   import { message } from 'ant-design-vue';
   import { mallAdminApi } from '/@/api/business/mall/mall-admin-api';
+  import { fileApi } from '/@/api/support/file-api';
+  import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
   import { smartSentry } from '/@/lib/smart-sentry';
 
   const columns = [
@@ -72,6 +94,53 @@
   const tableLoading = ref(false);
   const visible = ref(false);
   const form = reactive({});
+  const setting = reactive({ merchantWechatQr: '', merchantAlipayQr: '' });
+
+  function fileUrl(url) {
+    if (!url) {
+      return '';
+    }
+    try {
+      const parsed = new URL(url, window.location.origin);
+      const idx = parsed.pathname.indexOf('/upload/');
+      const path = idx >= 0 ? parsed.pathname.substring(idx) : parsed.pathname;
+      if (path.startsWith('/upload/')) {
+        return `${window.location.protocol}//${window.location.hostname}${path}`;
+      }
+    } catch (e) {
+      const raw = String(url);
+      const idx = raw.indexOf('/upload/');
+      if (idx >= 0) {
+        return `${window.location.protocol}//${window.location.hostname}${raw.substring(idx)}`;
+      }
+    }
+    return url;
+  }
+
+  function beforeUpload(file) {
+    const ok = /\.(png|jpe?g|gif|webp)$/i.test(file.name);
+    if (!ok) {
+      message.error('请上传图片');
+      return false;
+    }
+    return true;
+  }
+
+  async function uploadSetting(field, options) {
+    try {
+      const formData = new FormData();
+      formData.append('file', options.file);
+      const res = await fileApi.uploadFile(formData, FILE_FOLDER_TYPE_ENUM.MEDIA.value);
+      const url = res.data?.fileUrl || '';
+      setting[field] = url;
+      await mallAdminApi.saveSetting({ ...setting });
+      message.success('已更新收款码');
+      options.onSuccess && options.onSuccess();
+    } catch (e) {
+      options.onError && options.onError(e);
+      smartSentry.captureError(e);
+    }
+  }
   function h5BaseUrl() {
     const host = location.hostname;
     if (host === 'localhost' || host === '127.0.0.1') {
@@ -118,9 +187,26 @@
     try {
       const res = await mallAdminApi.config();
       configTip.value = `同时抢购人数上限 ${res.data.concurrentLimit}（待定可改 yaml）。支付超时 ${res.data.payTimeoutMinutes} 分钟。一级分销 ${res.data.defaultCommissionRate}。快递100 ${res.data.kuaidi100Enabled ? '已配置真查询' : '未配置，发货后按演示轨迹推进'}。H5：${h5BaseUrl()}  买家 13800000002 / 123456`;
+      setting.merchantWechatQr = res.data.merchantWechatQr || '';
+      setting.merchantAlipayQr = res.data.merchantAlipayQr || '';
     } catch (e) {
       smartSentry.captureError(e);
     }
     queryData();
   });
 </script>
+<style scoped>
+  .qr-title {
+    margin-bottom: 8px;
+    color: #666;
+  }
+  .qr-empty {
+    width: 140px;
+    height: 140px;
+    line-height: 140px;
+    text-align: center;
+    background: #f5f5f5;
+    color: #999;
+    border-radius: 8px;
+  }
+</style>

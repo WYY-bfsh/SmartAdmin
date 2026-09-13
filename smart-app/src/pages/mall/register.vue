@@ -1,4 +1,5 @@
 <template>
+  <!-- 注册：邀请码必填；防浏览器把账号填进邀请码、把登录密码填进注册密码 -->
   <view class="register">
     <view class="title">注册</view>
 
@@ -9,15 +10,38 @@
     </view>
 
     <view class="form">
-      <input class="input" v-model="form.nickname" maxlength="20" placeholder="请输入昵称" />
-      <input class="input" type="number" maxlength="11" v-model="form.phone" placeholder="请输入手机号" />
-      <input class="input" v-model="form.inviteCode" maxlength="32" placeholder="请输入邀请码（选填）" />
-      <input class="input" password v-model="form.password" maxlength="32" placeholder="请输入登录密码" />
+      <!-- 浏览器会把「账号+密码」填进紧挨着的文本框；这两个隐藏项用来接住误填 -->
+      <input class="autofill-trap" type="text" name="username" autocomplete="username" tabindex="-1" />
+      <input class="autofill-trap" password name="password" autocomplete="current-password" tabindex="-1" />
+
+      <input class="input" v-model="form.nickname" name="nickname" maxlength="20" placeholder="请输入昵称" autocomplete="nickname" />
+      <input class="input" type="tel" name="phone" maxlength="11" v-model="form.phone" placeholder="请输入手机号" autocomplete="tel" />
+      <input
+        class="input"
+        v-model="form.inviteCode"
+        name="invite-code"
+        maxlength="32"
+        placeholder="请输入邀请码"
+        autocomplete="off"
+        :readonly="inviteLocked"
+        @focus="unlockInvite"
+      />
+      <input
+        class="input"
+        password
+        name="new-password"
+        v-model="form.password"
+        maxlength="32"
+        placeholder="请输入登录密码"
+        autocomplete="new-password"
+        @focus="passwordTouched = true"
+        @input="passwordTouched = true"
+      />
       <view class="qr-row">
         <view class="qr-item" @click="chooseImage('wechatPayQr')">
           <image v-if="previews.wechatPayQr" class="qr" :src="previews.wechatPayQr" mode="aspectFit" />
           <view v-else class="qr empty">+</view>
-          <view class="qr-tip">{{ uploadingField === 'wechatPayQr' ? '上传中…' : '微信支付码' }}</view>
+          <view class="qr-tip">{{ uploadingField === 'wechatPayQr' ? '上传中…' : '支付宝收款码' }}</view>
         </view>
         <view class="qr-item" @click="chooseImage('wechatReceiveQr')">
           <image v-if="previews.wechatReceiveQr" class="qr" :src="previews.wechatReceiveQr" mode="aspectFit" />
@@ -43,7 +67,7 @@
 </template>
 
 <script setup>
-  import { reactive, ref } from 'vue';
+  import { onMounted, reactive, ref } from 'vue';
   import { onLoad } from '@dcloudio/uni-app';
   import { mallH5Api, resolveMallFileUrl, saveMallToken } from '@/api/business/mall/mall-h5-api';
   import { captureMallInvite } from '@/utils/mall-invite';
@@ -54,6 +78,10 @@
   const uploadingField = ref('');
   const agreed = ref(false);
   const apiHint = ref('');
+  const inviteLocked = ref(true);
+  const inviteFromLink = ref(captureMallInvite());
+  const inviteTouched = ref(false);
+  const passwordTouched = ref(false);
   const avatarPreview = ref('');
   const previews = reactive({
     wechatPayQr: '',
@@ -117,11 +145,36 @@
     previews[field] = url;
   }
 
+  function unlockInvite() {
+    inviteLocked.value = false;
+    inviteTouched.value = true;
+  }
+
+  function stripWrongAutofill() {
+    if (!inviteTouched.value) {
+      const intended = String(inviteFromLink.value || '').trim();
+      const current = String(form.inviteCode || '').trim();
+      if (/^1\d{10}$/.test(current) && current !== intended) {
+        form.inviteCode = intended;
+      }
+    }
+    if (!passwordTouched.value) {
+      form.password = '';
+    }
+  }
+
   onLoad((options) => {
     const invite = captureMallInvite(options);
     if (invite) {
+      inviteFromLink.value = invite;
       form.inviteCode = invite;
     }
+  });
+
+  onMounted(() => {
+    stripWrongAutofill();
+    setTimeout(stripWrongAutofill, 200);
+    setTimeout(stripWrongAutofill, 800);
   });
 
   function goLogin() {
@@ -149,6 +202,9 @@
     if (!/^1\d{10}$/.test(phone)) {
       return '请输入11位手机号';
     }
+    if (!String(form.inviteCode || '').trim()) {
+      return '请输入邀请码';
+    }
     if (password.length < 6) {
       return '登录密码至少6位';
     }
@@ -156,7 +212,7 @@
       return '图片正在上传，请稍候';
     }
     if (!form.wechatPayQr) {
-      return '请上传微信支付码';
+      return '请上传微信收款码';
     }
     if (!form.wechatReceiveQr) {
       return '请上传支付宝收款码';
@@ -245,7 +301,17 @@
   }
 
   .form {
+    position: relative;
     margin-top: 12rpx;
+  }
+
+  .autofill-trap {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .qr-row {

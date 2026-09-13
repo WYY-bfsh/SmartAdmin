@@ -1,3 +1,7 @@
+/**
+ * 秒杀商城 H5 接口。Token 放在请求头 Mall-Token。
+ * 下单后付款走 submitPayProof，不再一键 mock 支付。
+ */
 import { MALL_TOKEN } from '@/constants/local-storage-key-const';
 
 function resolveBase() {
@@ -201,7 +205,7 @@ export const mallH5Api = {
   addressList: () => mallRequest('/mall/h5/address/list', 'GET'),
   saveAddress: (data) => mallRequest('/mall/h5/address/save', 'POST', data),
   createOrder: (data) => mallRequest('/mall/h5/order/create', 'POST', data),
-  pay: (orderId) => mallRequest(`/mall/h5/order/pay/${orderId}`, 'POST'),
+  submitPayProof: (data) => mallRequest('/mall/h5/order/pay-proof', 'POST', data),
   orderList: (orderStatus) =>
     mallRequest('/mall/h5/order/list', 'GET', orderStatus == null ? {} : { orderStatus }),
   orderDetail: (orderId) => mallRequest(`/mall/h5/order/${orderId}`, 'GET'),
@@ -212,6 +216,7 @@ export const mallH5Api = {
 
 export const MALL_ORDER_STATUS = {
   10: '待付款',
+  15: '待商家确认',
   20: '待发货',
   30: '已发货',
   40: '已完成',

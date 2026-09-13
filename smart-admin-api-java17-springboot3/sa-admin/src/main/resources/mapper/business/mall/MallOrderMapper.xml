@@ -3,7 +3,7 @@
 <mapper namespace="net.lab1024.sa.admin.module.business.mall.dao.MallOrderDao">
 
     <select id="countValidByMemberActivity" resultType="int">
-        SELECT COUNT(1)
+        SELECT COALESCE(SUM(qty), 0)
         FROM t_mall_order
         WHERE member_id = #{memberId}
           AND activity_id = #{activityId}
@@ -11,4 +11,49 @@
           AND order_status != 50
     </select>
 
+    <update id="closeIfWaitPayExpired">
+        UPDATE t_mall_order
+        SET order_status = 50,
+            pay_status = 30,
+            close_time = NOW()
+        WHERE order_id = #{orderId}
+          AND order_status = 10
+          AND deleted_flag = 0
+          AND expire_time &lt;= NOW()
+    </update>
+
+    <update id="submitProofIfWaitPay">
+        UPDATE t_mall_order
+        SET pay_proof_url = #{payProofUrl},
+            pay_note = #{payNote},
+            pay_status = 15,
+            order_status = 15
+        WHERE order_id = #{orderId}
+          AND order_status = 10
+          AND deleted_flag = 0
+          AND (expire_time IS NULL OR expire_time &gt; NOW())
+    </update>
+
+    <update id="confirmPayIfWaitConfirm">
+        UPDATE t_mall_order
+        SET pay_status = 20,
+            order_status = 20,
+            pay_time = NOW()
+        WHERE order_id = #{orderId}
+          AND order_status = 15
+          AND deleted_flag = 0
+          AND pay_proof_url IS NOT NULL
+          AND pay_proof_url != ''
+    </update>
+
+    <update id="rejectPayIfWaitConfirm">
+        UPDATE t_mall_order
+        SET order_status = 50,
+            pay_status = 30,
+            close_time = NOW(),
+            remark = #{remark}
+        WHERE order_id = #{orderId}
+          AND order_status = 15
+          AND deleted_flag = 0
+    </update>
 </mapper>

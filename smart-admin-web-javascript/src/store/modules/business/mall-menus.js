@@ -37,6 +37,9 @@ export function ensureMallMenus(menuList) {
     if (!list.some((e) => e.menuId === 617)) {
       list.push(point(617, 603, '维护会员', 'mall:member:save'));
     }
+    if (!list.some((e) => e.menuId === 618)) {
+      list.push(point(618, 602, '确认收款', 'mall:order:ship'));
+    }
     return list;
   }
   return list.concat([

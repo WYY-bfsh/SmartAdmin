@@ -6,20 +6,24 @@ import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
 @Data
+@Schema(description = "H5 注册。邀请码必填。")
 public class MallRegisterForm {
 
     @NotBlank(message = "请输入手机号")
     @Length(min = 11, max = 11, message = "请输入11位手机号")
+    @Schema(description = "手机号，作为登录账号")
     private String phone;
 
     @NotBlank(message = "请输入密码")
     @Length(min = 6, max = 32, message = "密码至少6位")
+    @Schema(description = "登录密码，注册时设置")
     private String password;
 
     @Schema(description = "昵称")
     private String nickname;
 
-    @Schema(description = "邀请码")
+    @NotBlank(message = "请输入邀请码")
+    @Schema(description = "邀请码，必须对应已有会员")
     private String inviteCode;
 
     @Schema(description = "头像地址")
