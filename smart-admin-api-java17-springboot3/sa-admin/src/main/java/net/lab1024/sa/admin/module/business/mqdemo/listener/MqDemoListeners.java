@@ -25,8 +25,8 @@ public class MqDemoListeners {
             throw e;
         }
     }
-    // 此处是消费者模式 ， 监听的时候 设置 concurrency=‘5’ 意思是5个线程在消费 代理 broker 里面的 消息
-    @RabbitListener(queues = MqDemoRabbitConfig.Q_WORK, concurrency = "5")
+    // 此处是消费者模式 ， 监听的时候 设置 concurrency=‘5’ 意思是2个线程在消费 代理 broker 里面的 消息
+    @RabbitListener(queues = MqDemoRabbitConfig.Q_WORK, concurrency = "2-2")
     public void onWork(String body, Message message, Channel channel) throws Exception {
         try {
             log.info("[mq-demo][work] thread={} recv={}", Thread.currentThread().getName(), body);
