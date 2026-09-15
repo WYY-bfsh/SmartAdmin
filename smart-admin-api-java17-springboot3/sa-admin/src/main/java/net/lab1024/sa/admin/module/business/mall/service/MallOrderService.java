@@ -3,6 +3,9 @@ package net.lab1024.sa.admin.module.business.mall.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
+import net.lab1024.sa.admin.module.business.mall.notify.producer.OrderCreatedEventPublisher;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import net.lab1024.sa.admin.module.business.mall.config.MallProperties;
 import net.lab1024.sa.admin.module.business.mall.constant.CommissionStatusEnum;
 import net.lab1024.sa.admin.module.business.mall.constant.ExpressCompanyEnum;
@@ -84,6 +87,9 @@ public class MallOrderService {
     @Resource
     private MallAlipayPayService mallAlipayPayService;
 
+    @Resource
+    private OrderCreatedEventPublisher orderCreatedEventPublisher;
+
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<MallOrderVO> create(MallCreateOrderForm form) {
         mallSeedService.ensureReady();
@@ -132,6 +138,17 @@ public class MallOrderService {
         order.setDeletedFlag(Boolean.FALSE);
         order.setCreateTime(LocalDateTime.now());
         mallOrderDao.insert(order);
+        final MallOrderEntity published = order;
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    orderCreatedEventPublisher.publishAfterCommit(published);
+                }
+            });
+        } else {
+            orderCreatedEventPublisher.publishAfterCommit(published);
+        }
         mallWechatPayService.attachAfterCreate(order);
         return ResponseDTO.ok(toVo(order, false));
     }

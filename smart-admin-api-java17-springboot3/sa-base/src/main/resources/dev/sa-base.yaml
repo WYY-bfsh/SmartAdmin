@@ -52,7 +52,7 @@ spring:
         acknowledge-mode: manual
         prefetch: 1
         concurrency: 1
-        max-concurrency: 3
+        max-concurrency: 5
   mail:
     host: smtp.163.com
     port: 465
@@ -257,3 +257,14 @@ mall:
     # 快递100 实时查询。customer + key 都填了就查真轨迹；否则按发货时间生成与快递100同结构的演示轨迹
     kuaidi100-key:
     kuaidi100-customer:
+
+tencent:
+  sms:
+    enabled: true
+    mock: true
+    secret-id: ${TENCENT_SECRET_ID:}
+    secret-key: ${TENCENT_SECRET_KEY:}
+    sdk-app-id: ${TENCENT_SMS_SDK_APP_ID:}
+    sign-name: ${TENCENT_SMS_SIGN_NAME:}
+    template-id: ${TENCENT_SMS_TEMPLATE_ID:}
+    region: ap-guangzhou

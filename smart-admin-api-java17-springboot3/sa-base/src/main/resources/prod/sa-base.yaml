@@ -50,7 +50,7 @@ spring:
         acknowledge-mode: manual
         prefetch: 1
         concurrency: 1
-        max-concurrency: 3
+        max-concurrency: 5
   mail:
     host: smtp.163.com
     port: 465
@@ -240,3 +240,14 @@ alipay:
     charset: UTF-8
     sign-type: RSA2
     timeout-express: 30m
+
+tencent:
+  sms:
+    enabled: true
+    mock: true
+    secret-id: ${TENCENT_SECRET_ID:}
+    secret-key: ${TENCENT_SECRET_KEY:}
+    sdk-app-id: ${TENCENT_SMS_SDK_APP_ID:}
+    sign-name: ${TENCENT_SMS_SIGN_NAME:}
+    template-id: ${TENCENT_SMS_TEMPLATE_ID:}
+    region: ap-guangzhou

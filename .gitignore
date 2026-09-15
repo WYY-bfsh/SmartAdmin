@@ -40,4 +40,5 @@ deploy/nginx/certs/*.crt
 deploy/nginx/certs/*.key
 deploy/nginx/certs/*.pem
 deploy/nginx/conf.d/smartadmin-ssl.conf
-
+**/tencent-sms.local.env
+**/*.local.env
