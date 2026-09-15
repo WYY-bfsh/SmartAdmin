@@ -46,6 +46,8 @@ public class AdminSwaggerTagConst extends SwaggerTagConst {
 
         public static final String MALL_H5 = "秒杀商城-用户端H5";
 
+        public static final String MQ_DEMO = "消息队列-AMQP五种模式";
+
     }
 
 

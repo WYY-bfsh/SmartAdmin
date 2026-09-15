@@ -1,7 +1,8 @@
 spring:
   # 数据库连接信息
   datasource:
-    url: jdbc:p6spy:mysql://175.27.131.7:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true&serverTimezone=Asia/Shanghai
+#    url: jdbc:p6spy:mysql://10.66.66.1:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true&serverTimezone=Asia/Shanghai
+    url: jdbc:p6spy:mysql://10.66.66.1:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true&serverTimezone=Asia/Shanghai
     username: smart_admin_v3
     password: root
     driver-class-name: com.p6spy.engine.spy.P6SpyDriver
@@ -24,9 +25,10 @@ spring:
   data:
     redis:
       database: 1
-      host: 175.27.131.7
+      host: 10.66.66.1
       port: 6379
-      password: 123456
+      # 服务器 Redis 未设置 requirepass，本地连 VPN 不要填密码
+      password:
       timeout: 10000ms
       lettuce:
         pool:
@@ -34,8 +36,23 @@ spring:
           min-idle: 1
           max-idle: 3
           max-wait: 30000ms
-
   # 邮件，置以SSL的方式发送, 这个需要使用这种方式并且端口是465
+
+  # RabbitMQ 练习/业务 175.27.131.7
+  rabbitmq:
+    host: 175.27.131.7
+    port: 5672
+    username: admin
+    password: admin123
+    virtual-host: /
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 1
+        concurrency: 1
+        max-concurrency: 3
   mail:
     host: smtp.163.com
     port: 465

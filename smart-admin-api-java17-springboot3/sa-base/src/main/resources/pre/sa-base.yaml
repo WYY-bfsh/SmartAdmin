@@ -36,6 +36,22 @@ spring:
           max-wait: 30000ms
 
   # 邮件，置以SSL的方式发送, 这个需要使用这种方式并且端口是465
+
+  # RabbitMQ 练习/业务 175.27.131.7
+  rabbitmq:
+    host: 175.27.131.7
+    port: 5672
+    username: admin
+    password: admin123
+    virtual-host: /
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 1
+        concurrency: 1
+        max-concurrency: 3
   mail:
     host: smtp.163.com
     port: 465
