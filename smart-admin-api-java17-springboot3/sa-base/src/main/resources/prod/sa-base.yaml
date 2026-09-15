@@ -194,11 +194,11 @@ wechat:
   pay:
     enabled: false
     mock: false
-    app-id:
-    app-secret:
-    mch-id:
-    api-v3-key:
-    merchant-serial-number:
+    app-id: wxf8b0b094c3b35cab
+    app-secret: 8c3ec344559b4134be54147471aea7de
+    mch-id: '1605643694'
+    api-v3-key: apikeyforzhinengcheliang20210112
+    merchant-serial-number: 12D4B9E2A29E2C8508C58C4E1085B23D91E28986
     private-key:
     private-key-path:
     notify-url: https://desire.wang/api/pay/wechat/notify
