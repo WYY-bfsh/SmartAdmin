@@ -66,9 +66,6 @@ import java.util.Set;
 public class PayReconService {
 
     @Resource
-    private PaySchemaService paySchemaService;
-
-    @Resource
     private PayOrderDao payOrderDao;
 
     @Resource
@@ -90,7 +87,6 @@ public class PayReconService {
     private PlatformTransactionManager transactionManager;
 
     public ResponseDTO<PageResult<PayReconBatchVO>> queryBatch(PayReconBatchQueryForm queryForm) {
-        paySchemaService.ensureTables();
         Page<?> page = SmartPageUtil.convert2PageQuery(queryForm);
         List<PayReconBatchVO> list = payReconBatchDao.query(page, queryForm);
         list.forEach(this::fillBatchYuan);
@@ -98,7 +94,6 @@ public class PayReconService {
     }
 
     public ResponseDTO<PayReconBatchVO> detail(Long batchId) {
-        paySchemaService.ensureTables();
         PayReconBatchEntity entity = payReconBatchDao.selectById(batchId);
         if (entity == null) {
             return ResponseDTO.userErrorParam("对账批次不存在");
@@ -109,7 +104,6 @@ public class PayReconService {
     }
 
     public ResponseDTO<PageResult<PayReconItemVO>> queryItem(PayReconItemQueryForm queryForm) {
-        paySchemaService.ensureTables();
         Page<?> page = SmartPageUtil.convert2PageQuery(queryForm);
         List<PayReconItemVO> list = payReconItemDao.query(page, queryForm);
         list.forEach(this::fillItemYuan);
@@ -117,7 +111,6 @@ public class PayReconService {
     }
 
     public ResponseDTO<PayReconBatchVO> pull(PayReconPullForm form) {
-        paySchemaService.ensureTables();
         validateBillDate(form.getBillDate(), true);
         Integer channel = form.getPayChannel();
         LocalDate date = form.getBillDate();
@@ -155,7 +148,6 @@ public class PayReconService {
     }
 
     public ResponseDTO<PayReconBatchVO> mock(PayReconPullForm form) {
-        paySchemaService.ensureTables();
         validateBillDate(form.getBillDate(), false);
         List<PayBillLine> lines = mockLines(form.getPayChannel(), form.getBillDate());
         return ResponseDTO.ok(matchAndSave(form.getBillDate(), form.getPayChannel(),
@@ -163,7 +155,6 @@ public class PayReconService {
     }
 
     public ResponseDTO<PayReconBatchVO> upload(Integer payChannel, LocalDate billDate, MultipartFile file) {
-        paySchemaService.ensureTables();
         if (file == null || file.isEmpty()) {
             return ResponseDTO.userErrorParam("请选择账单文件");
         }
@@ -196,7 +187,6 @@ public class PayReconService {
 
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> handle(PayReconHandleForm form) {
-        paySchemaService.ensureTables();
         PayReconItemEntity item = payReconItemDao.selectById(form.getItemId());
         if (item == null) {
             return ResponseDTO.userErrorParam("对账明细不存在");
@@ -216,7 +206,6 @@ public class PayReconService {
 
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> deleteBatch(Long batchId) {
-        paySchemaService.ensureTables();
         PayReconBatchEntity batch = payReconBatchDao.selectById(batchId);
         if (batch == null) {
             return ResponseDTO.userErrorParam("对账批次不存在");
@@ -227,7 +216,6 @@ public class PayReconService {
     }
 
     public void exportItem(Long batchId, HttpServletResponse response) throws IOException {
-        paySchemaService.ensureTables();
         PayReconBatchEntity batch = payReconBatchDao.selectById(batchId);
         if (batch == null) {
             throw new BusinessException("对账批次不存在");

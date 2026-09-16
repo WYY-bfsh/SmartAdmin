@@ -1,8 +1,10 @@
--- 秒杀商城表（与 MallSchemaService 对齐，可重复执行）
--- 先导入 smart_admin_v3.sql 后再执行本文件
+-- 秒杀商城表（正式库侧脚本，可重复执行）
+-- 先导入 smart_admin_v3.sql，再执行本文件
+-- 增量字段见 sql-update-log/2026-09-16-formal-business-schema.sql
 
 USE `smart_admin_v3`;
 
+-- ========== 秒杀商城 ==========
 CREATE TABLE IF NOT EXISTS `t_mall_member` (
   `member_id` bigint NOT NULL AUTO_INCREMENT,
   `phone` varchar(20) NOT NULL,
@@ -13,13 +15,15 @@ CREATE TABLE IF NOT EXISTS `t_mall_member` (
   `avatar` varchar(512) DEFAULT NULL,
   `wechat_pay_qr` varchar(512) DEFAULT NULL COMMENT '微信支付码',
   `wechat_receive_qr` varchar(512) DEFAULT NULL COMMENT '微信收款码',
+  `wechat_openid` varchar(64) DEFAULT NULL COMMENT '微信openid',
+  `commission_level` int DEFAULT NULL COMMENT '分销等级',
   `deleted_flag` tinyint(1) NOT NULL DEFAULT 0,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`member_id`),
   UNIQUE KEY `uk_phone` (`phone`),
   UNIQUE KEY `uk_invite` (`invite_code`)
-) COMMENT='秒杀商城会员';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='秒杀商城会员';
 
 CREATE TABLE IF NOT EXISTS `t_mall_address` (
   `address_id` bigint NOT NULL AUTO_INCREMENT,
@@ -36,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `t_mall_address` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`address_id`),
   KEY `idx_member` (`member_id`)
-) COMMENT='收货地址';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='收货地址';
 
 CREATE TABLE IF NOT EXISTS `t_seckill_activity` (
   `activity_id` bigint NOT NULL AUTO_INCREMENT,
@@ -53,12 +57,13 @@ CREATE TABLE IF NOT EXISTS `t_seckill_activity` (
   `end_time` datetime NOT NULL,
   `concurrent_limit` int DEFAULT NULL,
   `commission_rate` decimal(6,4) DEFAULT NULL,
+  `commission_rate_l2` decimal(6,4) DEFAULT NULL COMMENT '二级分销比例',
   `enabled_flag` tinyint(1) NOT NULL DEFAULT 1,
   `deleted_flag` tinyint(1) NOT NULL DEFAULT 0,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`activity_id`)
-) COMMENT='秒杀活动';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='秒杀活动';
 
 CREATE TABLE IF NOT EXISTS `t_mall_order` (
   `order_id` bigint NOT NULL AUTO_INCREMENT,
@@ -87,6 +92,8 @@ CREATE TABLE IF NOT EXISTS `t_mall_order` (
   `remark` varchar(255) DEFAULT NULL,
   `pay_proof_url` varchar(512) DEFAULT NULL COMMENT '付款截图',
   `pay_note` varchar(255) DEFAULT NULL COMMENT '付款说明',
+  `pay_channel` int DEFAULT NULL COMMENT '10线下 20微信',
+  `wx_transaction_id` varchar(64) DEFAULT NULL COMMENT '微信支付单号',
   `deleted_flag` tinyint(1) NOT NULL DEFAULT 0,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -94,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `t_mall_order` (
   UNIQUE KEY `uk_order_no` (`order_no`),
   KEY `idx_member` (`member_id`),
   KEY `idx_status` (`order_status`)
-) COMMENT='秒杀订单';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='秒杀订单';
 
 CREATE TABLE IF NOT EXISTS `t_mall_express_trace` (
   `trace_id` bigint NOT NULL AUTO_INCREMENT,
@@ -106,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `t_mall_express_trace` (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`trace_id`),
   KEY `idx_order` (`order_id`)
-) COMMENT='物流轨迹';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='物流轨迹';
 
 CREATE TABLE IF NOT EXISTS `t_mall_commission` (
   `commission_id` bigint NOT NULL AUTO_INCREMENT,
@@ -116,13 +123,14 @@ CREATE TABLE IF NOT EXISTS `t_mall_commission` (
   `order_no` varchar(32) NOT NULL,
   `amount` decimal(10,2) NOT NULL,
   `rate` decimal(6,4) NOT NULL,
+  `commission_level` int DEFAULT NULL COMMENT '1一级 2二级',
   `status` int NOT NULL DEFAULT 10,
   `settle_time` datetime DEFAULT NULL,
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`commission_id`),
   UNIQUE KEY `uk_order` (`order_id`),
   KEY `idx_member` (`member_id`)
-) COMMENT='一级分销佣金';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='一级分销佣金';
 
 CREATE TABLE IF NOT EXISTS `t_mall_setting` (
   `setting_id` bigint NOT NULL,
@@ -131,4 +139,22 @@ CREATE TABLE IF NOT EXISTS `t_mall_setting` (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`setting_id`)
-) COMMENT='商城配置';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商城配置';
+
+CREATE TABLE IF NOT EXISTS `t_mall_order_notify` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `order_no` varchar(64) NOT NULL,
+  `member_id` bigint DEFAULT NULL,
+  `channel` varchar(16) NOT NULL DEFAULT 'SMS',
+  `status` varchar(16) NOT NULL COMMENT 'SUCCESS/FAILED/PENDING',
+  `event_id` varchar(64) DEFAULT NULL,
+  `mobile` varchar(32) DEFAULT NULL,
+  `content` varchar(512) DEFAULT NULL,
+  `provider_msg_id` varchar(128) DEFAULT NULL,
+  `error_msg` varchar(512) DEFAULT NULL,
+  `retry_count` int NOT NULL DEFAULT 0,
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_no_channel` (`order_no`,`channel`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单通知记录';

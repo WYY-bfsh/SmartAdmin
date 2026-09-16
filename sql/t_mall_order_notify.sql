@@ -1,3 +1,5 @@
+-- 订单通知表（亦可执行 sql/mysql/sql-update-log/2026-09-16-formal-business-schema.sql）
+USE `smart_admin_v3`;
 CREATE TABLE IF NOT EXISTS `t_mall_order_notify` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `order_no` varchar(64) NOT NULL,
@@ -14,4 +16,4 @@ CREATE TABLE IF NOT EXISTS `t_mall_order_notify` (
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_order_no_channel` (`order_no`,`channel`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单通知记录';

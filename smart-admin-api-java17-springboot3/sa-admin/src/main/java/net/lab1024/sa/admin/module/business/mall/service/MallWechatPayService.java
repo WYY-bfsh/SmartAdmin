@@ -23,7 +23,6 @@ import net.lab1024.sa.admin.module.business.pay.constant.PayStatusEnum;
 import net.lab1024.sa.admin.module.business.pay.constant.PayTradeTypeEnum;
 import net.lab1024.sa.admin.module.business.pay.dao.PayOrderDao;
 import net.lab1024.sa.admin.module.business.pay.domain.entity.PayOrderEntity;
-import net.lab1024.sa.admin.module.business.pay.service.PaySchemaService;
 import net.lab1024.sa.admin.module.business.pay.service.WeChatPayClient;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.exception.BusinessException;
@@ -50,9 +49,6 @@ public class MallWechatPayService {
 
     @Resource
     private PayOrderDao payOrderDao;
-
-    @Resource
-    private PaySchemaService paySchemaService;
 
     @Resource
     private MallOrderDao mallOrderDao;
@@ -308,7 +304,6 @@ public class MallWechatPayService {
     }
 
     private PayOrderEntity ensurePayOrder(MallOrderEntity order, Integer tradeType, String openid) {
-        paySchemaService.ensureTables();
         PayOrderEntity exist = findByMall(order);
         if (exist != null) {
             if (StringUtils.isNotBlank(openid)) {
@@ -333,7 +328,6 @@ public class MallWechatPayService {
     }
 
     private PayOrderEntity findByMall(MallOrderEntity order) {
-        paySchemaService.ensureTables();
         PayOrderEntity byMall = payOrderDao.selectOne(new LambdaQueryWrapper<PayOrderEntity>()
                 .eq(PayOrderEntity::getMallOrderId, order.getOrderId())
                 .eq(PayOrderEntity::getDeletedFlag, false)

@@ -56,9 +56,6 @@ public class MallMemberService {
     private static final Map<String, Long> TOKEN_FALLBACK = new ConcurrentHashMap<>();
 
     @Resource
-    private MallSchemaService mallSchemaService;
-
-    @Resource
     private MallMemberDao mallMemberDao;
 
     @Resource
@@ -74,7 +71,6 @@ public class MallMemberService {
     private FileService fileService;
 
     public void ensureReady() {
-        mallSchemaService.ensureTables();
     }
 
     public ResponseDTO<FileUploadVO> uploadAvatar(MultipartFile file) {

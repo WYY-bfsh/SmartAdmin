@@ -19,7 +19,6 @@ import net.lab1024.sa.admin.module.business.pay.constant.PayTradeTypeEnum;
 import net.lab1024.sa.admin.module.business.pay.dao.PayOrderDao;
 import net.lab1024.sa.admin.module.business.pay.domain.entity.PayOrderEntity;
 import net.lab1024.sa.admin.module.business.pay.service.AlipayClient;
-import net.lab1024.sa.admin.module.business.pay.service.PaySchemaService;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.exception.BusinessException;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -42,9 +41,6 @@ public class MallAlipayPayService {
 
     @Resource
     private PayOrderDao payOrderDao;
-
-    @Resource
-    private PaySchemaService paySchemaService;
 
     @Resource
     private MallOrderDao mallOrderDao;
@@ -195,7 +191,6 @@ public class MallAlipayPayService {
     }
 
     private PayOrderEntity ensurePayOrder(MallOrderEntity order, Integer tradeType) {
-        paySchemaService.ensureTables();
         PayOrderEntity exist = findByMall(order);
         if (exist != null) {
             return exist;
@@ -216,7 +211,6 @@ public class MallAlipayPayService {
     }
 
     private PayOrderEntity findByMall(MallOrderEntity order) {
-        paySchemaService.ensureTables();
         return payOrderDao.selectOne(new LambdaQueryWrapper<PayOrderEntity>()
                 .eq(PayOrderEntity::getMallOrderId, order.getOrderId())
                 .eq(PayOrderEntity::getPayChannel, PayChannelEnum.ALIPAY.getValue())

@@ -69,9 +69,6 @@ public class PayOrderService {
     @Resource
     private AlipayClient alipayClient;
 
-    @Resource
-    private PaySchemaService paySchemaService;
-
     @Lazy
     @Resource
     private MallWechatPayService mallWechatPayService;
@@ -93,7 +90,6 @@ public class PayOrderService {
     }
 
     public ResponseDTO<PageResult<PayOrderVO>> query(PayOrderQueryForm queryForm) {
-        paySchemaService.ensureTables();
         seedDemoOrdersIfNeeded();
         queryForm.setDeletedFlag(false);
         Page<?> page = SmartPageUtil.convert2PageQuery(queryForm);
@@ -117,7 +113,6 @@ public class PayOrderService {
 
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<PayCreateVO> create(PayOrderCreateForm createForm) {
-        paySchemaService.ensureTables();
         int amountFen = yuanToFen(createForm.getAmountYuan());
         int channel = createForm.getPayChannel() == null
                 ? PayChannelEnum.WECHAT.getValue() : createForm.getPayChannel();
@@ -402,7 +397,6 @@ public class PayOrderService {
     }
 
     private PayOrderEntity requireOrder(Long payOrderId) {
-        paySchemaService.ensureTables();
         PayOrderEntity entity = payOrderDao.selectById(payOrderId);
         if (entity == null || Boolean.TRUE.equals(entity.getDeletedFlag())) {
             throw new BusinessException("支付订单不存在");
