@@ -42,3 +42,7 @@ deploy/nginx/certs/*.pem
 deploy/nginx/conf.d/smartadmin-ssl.conf
 **/tencent-sms.local.env
 **/*.local.env
+
+# GitHub Actions deploy keys (never commit)
+deploy/secrets/
+

@@ -1,0 +1,91 @@
+name: Deploy production API
+
+# Push to master/main, or manual Run workflow -> SSH Docker deploy on server
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "smart-admin-api-java17-springboot3/**"
+      - "deploy/docker-compose.yml"
+      - ".github/workflows/deploy-prod.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pack API source
+        run: |
+          set -euo pipefail
+          tar -C smart-admin-api-java17-springboot3 \
+            --exclude='target' \
+            --exclude='.git' \
+            -czf smartadmin-api-src.tgz .
+          ls -lh smartadmin-api-src.tgz
+
+      - name: Upload tarball to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: 22
+          source: "smartadmin-api-src.tgz"
+          target: "/tmp"
+          overwrite: true
+
+      - name: Build and recreate sa-admin
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: 22
+          command_timeout: 40m
+          script: |
+            set -euo pipefail
+            API=/home/ubuntu/apps/smart-admin/smart-admin-api-java17-springboot3
+            DEPLOY=/home/ubuntu/apps/smart-admin/deploy
+
+            find "$API" -mindepth 1 -maxdepth 1 ! -name 'target' -exec rm -rf {} +
+            mkdir -p "$API"
+            tar -xzf /tmp/smartadmin-api-src.tgz -C "$API"
+            rm -f /tmp/smartadmin-api-src.tgz
+
+            if find "$API" -name '*SchemaService.java' | grep -q .; then
+              echo "Refusing deploy: SchemaService.java still present"
+              exit 1
+            fi
+
+            cd "$DEPLOY"
+            docker compose -p smartadmin build sa-admin
+            docker compose -p smartadmin up -d --force-recreate --no-deps sa-admin
+            docker restart smartadmin-nginx
+
+            echo "Waiting for application..."
+            for i in $(seq 1 40); do
+              if docker logs smartadmin-api 2>&1 | grep -q "started successfully"; then
+                echo "app started"
+                break
+              fi
+              if docker logs smartadmin-api 2>&1 | grep -qi "Application run failed"; then
+                docker logs smartadmin-api 2>&1 | tail -100
+                exit 1
+              fi
+              sleep 3
+            done
+
+            PORT=$(docker inspect smartadmin-nginx --format '{{(index (index .HostConfig.PortBindings "80/tcp") 0).HostPort}}')
+            echo "nginx host port=$PORT"
+            code=$(curl -sS -o /tmp/captcha.json -w "%{http_code}" "http://127.0.0.1:${PORT}/api/login/getCaptcha" || true)
+            echo "captcha_http=$code"
+            test "$code" = "200"
+            echo "DEPLOY_OK"
