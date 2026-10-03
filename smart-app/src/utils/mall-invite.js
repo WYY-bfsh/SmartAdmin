@@ -13,6 +13,32 @@ function readInviteFromSearch() {
   return '';
 }
 
+/** 微信网页授权回到 H5 入口页时，带着 code 跳进待付款订单 */
+export function captureWechatPayOauth() {
+  // #ifdef H5
+  try {
+    if (typeof location === 'undefined') {
+      return false;
+    }
+    const search = new URLSearchParams(location.search);
+    const code = search.get('code');
+    const state = search.get('state') || '';
+    if (code && state.startsWith('mallpay_')) {
+      const orderId = state.substring('mallpay_'.length);
+      if (orderId) {
+        uni.redirectTo({
+          url: `/pages/mall/order-detail?id=${encodeURIComponent(orderId)}&wxcode=${encodeURIComponent(code)}`,
+        });
+        return true;
+      }
+    }
+  } catch (e) {
+    return false;
+  }
+  // #endif
+  return false;
+}
+
 export function captureMallInvite(options) {
   let invite = (options && options.invite) || '';
   if (!invite) {

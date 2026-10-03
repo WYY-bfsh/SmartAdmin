@@ -20,6 +20,7 @@ target/
 
 ### front ###
 **/dist
+**/dist-*
 **/node_modules
 **/.vscode
 
@@ -39,5 +40,10 @@ deploy/nginx/certs/*.crt
 deploy/nginx/certs/*.key
 deploy/nginx/certs/*.pem
 deploy/nginx/conf.d/smartadmin-ssl.conf
+**/tencent-sms.local.env
+**/*.local.env
+
+# GitHub Actions deploy keys (never commit)
+deploy/secrets/
 
 deploy/.admin_pwd_backup_*.txt

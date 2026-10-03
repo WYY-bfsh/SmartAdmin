@@ -1,12 +1,3 @@
--- 秒杀商城（正规卖货：秒杀 + 一级分销 + 快递发货）
--- 表会在后端首次访问时自动创建，本文件仅作备份说明。
-
--- 会员 / 地址 / 秒杀活动 / 订单 / 物流轨迹 / 佣金
--- 详见 MallSchemaService
-
--- 演示账号：
--- 13800000001 / 123456  邀请码 SA0001（上级）
--- 13800000002 / 123456  邀请码 SA0002（下级，下单后给 0001 分佣）
-
--- 物流：发货填写快递100公司编码 + 运单号。
--- sa-base.yaml mall.express.kuaidi100-key / kuaidi100-customer 都填了则查真轨迹。
+-- 秒杀商城更新入口
+-- 请执行：sql/mysql/sql-update-log/2026-09-16-formal-business-schema.sql
+-- 全量恢复商城表：sql/mysql/restore-mall.sql

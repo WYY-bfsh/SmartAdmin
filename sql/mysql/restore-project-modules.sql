@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS `t_mall_member` (
   `avatar` varchar(512) DEFAULT NULL,
   `wechat_pay_qr` varchar(512) DEFAULT NULL COMMENT '微信支付码',
   `wechat_receive_qr` varchar(512) DEFAULT NULL COMMENT '微信收款码',
+  `wechat_openid` varchar(64) DEFAULT NULL COMMENT '微信openid',
   `deleted_flag` tinyint(1) NOT NULL DEFAULT 0,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -97,6 +98,8 @@ CREATE TABLE IF NOT EXISTS `t_mall_order` (
   `remark` varchar(255) DEFAULT NULL,
   `pay_proof_url` varchar(512) DEFAULT NULL COMMENT '付款截图',
   `pay_note` varchar(255) DEFAULT NULL COMMENT '付款说明',
+  `pay_channel` int DEFAULT NULL COMMENT '10线下 20微信',
+  `wx_transaction_id` varchar(64) DEFAULT NULL COMMENT '微信支付单号',
   `deleted_flag` tinyint(1) NOT NULL DEFAULT 0,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -347,6 +350,7 @@ CREATE TABLE IF NOT EXISTS `t_pay_order` (
   `description` varchar(127) NOT NULL,
   `amount` int NOT NULL,
   `trade_type` int NOT NULL DEFAULT 1,
+  `pay_channel` int NOT NULL DEFAULT 1 COMMENT '支付渠道 1微信 2支付宝',
   `pay_status` int NOT NULL DEFAULT 10,
   `code_url` varchar(512) DEFAULT NULL,
   `transaction_id` varchar(64) DEFAULT NULL,
@@ -361,13 +365,65 @@ CREATE TABLE IF NOT EXISTS `t_pay_order` (
   `notify_content` text,
   `remark` varchar(500) DEFAULT NULL,
   `create_user_id` bigint DEFAULT NULL,
+  `mall_order_id` bigint DEFAULT NULL COMMENT '秒杀订单ID',
   `deleted_flag` tinyint(1) NOT NULL DEFAULT 0,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`pay_order_id`),
   UNIQUE KEY `uk_order_no` (`order_no`),
-  KEY `idx_pay_status` (`pay_status`)
+  KEY `idx_pay_status` (`pay_status`),
+  KEY `idx_pay_channel` (`pay_channel`)
 ) COMMENT='微信支付订单';
+
+CREATE TABLE IF NOT EXISTS `t_pay_recon_batch` (
+  `batch_id` bigint NOT NULL AUTO_INCREMENT,
+  `bill_date` date NOT NULL,
+  `pay_channel` int NOT NULL,
+  `source_type` int NOT NULL,
+  `batch_status` int NOT NULL DEFAULT 10,
+  `local_count` int NOT NULL DEFAULT 0,
+  `channel_count` int NOT NULL DEFAULT 0,
+  `matched_count` int NOT NULL DEFAULT 0,
+  `amount_diff_count` int NOT NULL DEFAULT 0,
+  `status_diff_count` int NOT NULL DEFAULT 0,
+  `local_only_count` int NOT NULL DEFAULT 0,
+  `channel_only_count` int NOT NULL DEFAULT 0,
+  `local_amount` int NOT NULL DEFAULT 0,
+  `channel_amount` int NOT NULL DEFAULT 0,
+  `file_name` varchar(255) DEFAULT NULL,
+  `error_msg` varchar(500) DEFAULT NULL,
+  `remark` varchar(500) DEFAULT NULL,
+  `create_user_id` bigint DEFAULT NULL,
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`batch_id`),
+  KEY `idx_bill_date_channel` (`bill_date`, `pay_channel`)
+) COMMENT='支付对账批次';
+
+CREATE TABLE IF NOT EXISTS `t_pay_recon_item` (
+  `item_id` bigint NOT NULL AUTO_INCREMENT,
+  `batch_id` bigint NOT NULL,
+  `match_status` int NOT NULL,
+  `biz_type` int NOT NULL DEFAULT 1,
+  `pay_order_id` bigint DEFAULT NULL,
+  `order_no` varchar(64) DEFAULT NULL,
+  `local_amount` int DEFAULT NULL,
+  `local_status` int DEFAULT NULL,
+  `channel_trade_no` varchar(64) DEFAULT NULL,
+  `channel_order_no` varchar(64) DEFAULT NULL,
+  `channel_amount` int DEFAULT NULL,
+  `channel_status` varchar(64) DEFAULT NULL,
+  `channel_time` varchar(64) DEFAULT NULL,
+  `diff_amount` int DEFAULT NULL,
+  `handled_flag` tinyint(1) NOT NULL DEFAULT 0,
+  `remark` varchar(500) DEFAULT NULL,
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`item_id`),
+  KEY `idx_batch_id` (`batch_id`),
+  KEY `idx_match_status` (`match_status`),
+  KEY `idx_order_no` (`order_no`)
+) COMMENT='支付对账明细';
 
 -- =============================================================================
 -- 菜单（避开官方已占用的 menu_id=300 消息管理）
@@ -383,6 +439,33 @@ WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 311);
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `icon`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
 SELECT 312, '商户配置', 2, 310, 2, '/pay/config', '/business/pay/wechat-pay-config.vue', 'SettingOutlined', 1, 0, 0, 0, 0, 1, NOW(), 1, NOW()
 WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 312);
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `icon`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 313, '支付宝配置', 2, 310, 3, '/pay/alipay-config', '/business/pay/alipay-pay-config.vue', 'AlipayCircleOutlined', 1, 0, 0, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 313);
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `icon`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 314, '支付对账', 2, 310, 4, '/pay/recon', '/business/pay/pay-recon-list.vue', 'AuditOutlined', 1, 0, 0, 0, 1, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 314);
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `perms_type`, `api_perms`, `web_perms`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 315, '查询对账', 3, 314, 1, 1, 'pay:recon:query', 'pay:recon:query', 1, 0, 0, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 315);
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `perms_type`, `api_perms`, `web_perms`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 316, '拉取账单', 3, 314, 2, 1, 'pay:recon:pull', 'pay:recon:pull', 1, 0, 0, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 316);
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `perms_type`, `api_perms`, `web_perms`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 317, '上传账单', 3, 314, 3, 1, 'pay:recon:upload', 'pay:recon:upload', 1, 0, 0, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 317);
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `perms_type`, `api_perms`, `web_perms`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 318, '演示对账', 3, 314, 4, 1, 'pay:recon:mock', 'pay:recon:mock', 1, 0, 0, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 318);
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `perms_type`, `api_perms`, `web_perms`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 319, '核销差异', 3, 314, 5, 1, 'pay:recon:handle', 'pay:recon:handle', 1, 0, 0, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 319);
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `perms_type`, `api_perms`, `web_perms`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 320, '导出明细', 3, 314, 6, 1, 'pay:recon:export', 'pay:recon:export', 1, 0, 0, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 320);
+INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `perms_type`, `api_perms`, `web_perms`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
+SELECT 321, '删除批次', 3, 314, 7, 1, 'pay:recon:delete', 'pay:recon:delete', 1, 0, 0, 0, 0, 1, NOW(), 1, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM `t_menu` WHERE `menu_id` = 321);
 
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `icon`, `visible_flag`, `disabled_flag`, `deleted_flag`, `frame_flag`, `cache_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`)
 SELECT 400, '媒体中心', 1, 0, 3, '/media', NULL, 'AppstoreOutlined', 1, 0, 0, 0, 0, 1, NOW(), 1, NOW()
@@ -503,7 +586,7 @@ INSERT INTO `t_role_menu` (`role_id`, `menu_id`, `create_time`, `update_time`)
 SELECT 1, m.menu_id, NOW(), NOW()
 FROM `t_menu` m
 WHERE m.menu_id IN (
-  310, 311, 312,
+  310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321,
   400, 410, 411, 412, 414, 415, 416, 417, 419,
   420, 421, 422, 423, 424, 425, 426, 427, 428, 429,
   430, 431, 432, 433, 434, 435, 436, 437,

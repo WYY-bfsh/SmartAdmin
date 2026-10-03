@@ -1,10 +1,11 @@
 <script>
   import { useUserStore } from '@/store/modules/system/user';
-  import { captureMallInvite } from '@/utils/mall-invite';
+  import { captureMallInvite, captureWechatPayOauth } from '@/utils/mall-invite';
   export default {
     onLaunch: function () {
       useUserStore().getLoginInfo();
       captureMallInvite();
+      captureWechatPayOauth();
     },
     onShow: function () {
       console.log('App Show');
