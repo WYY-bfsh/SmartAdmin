@@ -12,6 +12,9 @@
             <if test="query.payStatus != null">
                 AND pay_status = #{query.payStatus}
             </if>
+            <if test="query.payChannel != null">
+                AND pay_channel = #{query.payChannel}
+            </if>
             <if test="query.createTimeBegin != null">
                 AND create_time &gt;= #{query.createTimeBegin}
             </if>
@@ -33,6 +36,33 @@
         WHERE order_no = #{orderNo}
           AND deleted_flag = 0
         LIMIT 1
+    </select>
+
+    <select id="selectByRefundNo" resultType="net.lab1024.sa.admin.module.business.pay.domain.entity.PayOrderEntity">
+        SELECT *
+        FROM t_pay_order
+        WHERE refund_no = #{refundNo}
+          AND deleted_flag = 0
+        LIMIT 1
+    </select>
+
+    <select id="selectByTransactionId" resultType="net.lab1024.sa.admin.module.business.pay.domain.entity.PayOrderEntity">
+        SELECT *
+        FROM t_pay_order
+        WHERE transaction_id = #{transactionId}
+          AND deleted_flag = 0
+        LIMIT 1
+    </select>
+
+    <select id="listForRecon" resultType="net.lab1024.sa.admin.module.business.pay.domain.entity.PayOrderEntity">
+        SELECT *
+        FROM t_pay_order
+        WHERE deleted_flag = 0
+          AND pay_channel = #{payChannel}
+          AND (
+            DATE(success_time) = #{billDate}
+            OR DATE(refund_time) = #{billDate}
+          )
     </select>
 
 </mapper>

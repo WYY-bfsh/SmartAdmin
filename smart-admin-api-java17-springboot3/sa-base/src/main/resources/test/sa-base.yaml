@@ -36,6 +36,22 @@ spring:
           max-wait: 30000ms
 
   # 邮件，置以SSL的方式发送, 这个需要使用这种方式并且端口是465
+
+  # RabbitMQ 练习/业务 175.27.131.7
+  rabbitmq:
+    host: 175.27.131.7
+    port: 5672
+    username: admin
+    password: admin123
+    virtual-host: /
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 1
+        concurrency: 1
+        max-concurrency: 5
   mail:
     host: smtp.163.com
     port: 465
@@ -193,9 +209,42 @@ wechat:
     enabled: false
     mock: false
     app-id:
+    app-secret:
     mch-id:
     api-v3-key:
     merchant-serial-number:
     private-key:
     private-key-path:
-    notify-url: https://your-domain.com/pay/wechat/notify
+    notify-url: https://your-domain.com/api/pay/wechat/notify
+    h5-app-url: https://your-domain.com
+
+# 支付宝支付
+alipay:
+  pay:
+    enabled: false
+    mock: false
+    sandbox: true
+    sign-mode: public-key
+    app-id:
+    private-key:
+    private-key-path:
+    alipay-public-key:
+    app-cert-path:
+    alipay-public-cert-path:
+    alipay-root-cert-path:
+    notify-url: https://your-domain.com/api/pay/alipay/notify
+    return-url: https://your-domain.com/pay/alipay/return
+    charset: UTF-8
+    sign-type: RSA2
+    timeout-express: 30m
+
+tencent:
+  sms:
+    enabled: true
+    mock: true
+    secret-id: ${TENCENT_SECRET_ID:}
+    secret-key: ${TENCENT_SECRET_KEY:}
+    sdk-app-id: ${TENCENT_SMS_SDK_APP_ID:}
+    sign-name: ${TENCENT_SMS_SIGN_NAME:}
+    template-id: ${TENCENT_SMS_TEMPLATE_ID:}
+    region: ap-guangzhou

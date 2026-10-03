@@ -24,6 +24,8 @@ import net.lab1024.sa.admin.module.business.mall.domain.vo.SeckillActivityVO;
 import net.lab1024.sa.admin.module.business.mall.service.MallExpressService;
 import net.lab1024.sa.admin.module.business.mall.service.MallMemberService;
 import net.lab1024.sa.admin.module.business.mall.service.MallOrderService;
+import net.lab1024.sa.admin.module.business.mall.service.MallAlipayPayService;
+import net.lab1024.sa.admin.module.business.mall.service.MallWechatPayService;
 import net.lab1024.sa.admin.module.business.mall.service.SeckillActivityService;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -47,6 +49,12 @@ public class MallAdminController {
 
     @Resource
     private MallOrderService mallOrderService;
+
+    @Resource
+    private MallWechatPayService mallWechatPayService;
+
+    @Resource
+    private MallAlipayPayService mallAlipayPayService;
 
     @Resource
     private MallMemberService mallMemberService;
@@ -112,6 +120,24 @@ public class MallAdminController {
     @SaCheckPermission("mall:order:query")
     public ResponseDTO<MallOrderVO> orderDetail(@PathVariable Long orderId) {
         return mallOrderService.detail(orderId, true);
+    }
+
+    @Operation(summary = "微信退款并关单", description = "已微信支付的待发货/已发货订单退款后关单回库存")
+    @PostMapping("/mall/admin/order/wechat-refund/{orderId}")
+    @SaCheckPermission("mall:order:ship")
+    @RepeatSubmit
+    public ResponseDTO<String> wechatRefund(@PathVariable Long orderId, @RequestBody(required = false) MallRejectPayForm form) {
+        String reason = form == null ? null : form.getRemark();
+        return mallWechatPayService.refundClose(orderId, reason);
+    }
+
+    @Operation(summary = "支付宝退款并关单")
+    @PostMapping("/mall/admin/order/alipay-refund/{orderId}")
+    @SaCheckPermission("mall:order:ship")
+    @RepeatSubmit
+    public ResponseDTO<String> alipayRefund(@PathVariable Long orderId, @RequestBody(required = false) MallRejectPayForm form) {
+        String reason = form == null ? null : form.getRemark();
+        return mallAlipayPayService.refundClose(orderId, reason);
     }
 
     @Operation(summary = "发货")

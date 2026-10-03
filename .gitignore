@@ -40,3 +40,4 @@ deploy/nginx/certs/*.key
 deploy/nginx/certs/*.pem
 deploy/nginx/conf.d/smartadmin-ssl.conf
 
+deploy/.admin_pwd_backup_*.txt

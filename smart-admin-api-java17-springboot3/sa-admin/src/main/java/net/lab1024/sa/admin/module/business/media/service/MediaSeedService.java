@@ -47,8 +47,6 @@ public class MediaSeedService {
     @Resource
     private MediaCatalogDao mediaCatalogDao;
     @Resource
-    private MediaSchemaService mediaSchemaService;
-    @Resource
     private ObjectMapper objectMapper;
 
     private volatile boolean ready;
@@ -62,7 +60,6 @@ public class MediaSeedService {
                 return;
             }
             try {
-                mediaSchemaService.ensureTables();
                 seedProjects();
                 seedMaterials();
                 seedTasks();

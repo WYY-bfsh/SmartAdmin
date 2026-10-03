@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.pay.dao.PayReconBatchDao">
+
+    <select id="query" resultType="net.lab1024.sa.admin.module.business.pay.domain.vo.PayReconBatchVO">
+        SELECT *
+        FROM t_pay_recon_batch
+        <where>
+            <if test="query.billDate != null">
+                AND bill_date = #{query.billDate}
+            </if>
+            <if test="query.payChannel != null">
+                AND pay_channel = #{query.payChannel}
+            </if>
+            <if test="query.sourceType != null">
+                AND source_type = #{query.sourceType}
+            </if>
+            <if test="query.batchStatus != null">
+                AND batch_status = #{query.batchStatus}
+            </if>
+        </where>
+        <if test="query.sortItemList == null or query.sortItemList.size == 0">
+            ORDER BY batch_id DESC
+        </if>
+    </select>
+
+</mapper>

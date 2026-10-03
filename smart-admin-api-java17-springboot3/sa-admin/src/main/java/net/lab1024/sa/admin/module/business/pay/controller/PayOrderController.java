@@ -9,6 +9,7 @@ import net.lab1024.sa.admin.constant.AdminSwaggerTagConst;
 import net.lab1024.sa.admin.module.business.pay.domain.form.PayOrderCreateForm;
 import net.lab1024.sa.admin.module.business.pay.domain.form.PayOrderQueryForm;
 import net.lab1024.sa.admin.module.business.pay.domain.form.PayRefundForm;
+import net.lab1024.sa.admin.module.business.pay.domain.vo.AlipayConfigVO;
 import net.lab1024.sa.admin.module.business.pay.domain.vo.PayCreateVO;
 import net.lab1024.sa.admin.module.business.pay.domain.vo.PayOrderVO;
 import net.lab1024.sa.admin.module.business.pay.domain.vo.WeChatPayConfigVO;
@@ -39,6 +40,13 @@ public class PayOrderController {
     @SaCheckPermission("pay:config:query")
     public ResponseDTO<WeChatPayConfigVO> config() {
         return payOrderService.getConfig();
+    }
+
+    @Operation(summary = "支付宝支付配置概览")
+    @GetMapping("/pay/alipay/config")
+    @SaCheckPermission("pay:config:query")
+    public ResponseDTO<AlipayConfigVO> alipayConfig() {
+        return payOrderService.getAlipayConfig();
     }
 
     @Operation(summary = "分页查询支付订单")

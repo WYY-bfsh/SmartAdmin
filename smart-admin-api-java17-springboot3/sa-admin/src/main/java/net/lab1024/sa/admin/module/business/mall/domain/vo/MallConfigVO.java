@@ -25,4 +25,14 @@ public class MallConfigVO {
     private String merchantWechatQr;
     @Schema(description = "商家支付宝收款码")
     private String merchantAlipayQr;
+    @Schema(description = "微信支付是否可用")
+    private Boolean wechatPayEnabled;
+    @Schema(description = "微信支付演示模式")
+    private Boolean wechatPayMock;
+    @Schema(description = "是否可做微信内 JSAPI（已配 app-secret）")
+    private Boolean wechatJsapiReady;
+    @Schema(description = "支付宝支付是否可用")
+    private Boolean alipayPayEnabled;
+    @Schema(description = "支付宝支付演示模式")
+    private Boolean alipayPayMock;
 }

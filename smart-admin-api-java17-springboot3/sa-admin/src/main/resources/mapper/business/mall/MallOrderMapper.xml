@@ -26,6 +26,7 @@
         UPDATE t_mall_order
         SET pay_proof_url = #{payProofUrl},
             pay_note = #{payNote},
+            pay_channel = 10,
             pay_status = 15,
             order_status = 15
         WHERE order_id = #{orderId}

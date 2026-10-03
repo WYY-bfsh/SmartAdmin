@@ -22,6 +22,9 @@ public class MallOrderVO {
     private String payProofUrl;
     @Schema(description = "用户付款说明")
     private String payNote;
+    @Schema(description = "10线下 20微信")
+    private Integer payChannel;
+    private String wxTransactionId;
     @Schema(description = "购买数量")
     private Integer qty;
     private BigDecimal price;

@@ -1,0 +1,99 @@
+name: smartadmin
+
+# ==========================================================================
+# 本文件在重新部署时做过三处修改（原文件改动前的版本见 git 记录）：
+#   1. mysql 去掉 10.66.66.1:3306 绑定 —— 该地址是已卸载的 WireGuard 网卡，
+#      服务器上不存在会导致容器启动失败
+#   2. mysql 初始化只导入一个完整数据快照（65 张表），不再挂整个 sql 目录 ——
+#      否则会按文件名顺序执行 4 个脚本、最后再被快照重建一次，既慢又易踩坑
+#   3. nginx 只保留 8080 对外 —— 80/443 已被 Caddy 占用（Hermes 面板在用）
+# 另为每个服务加了内存上限，避免这台 3.6G 的机器被 JVM 的
+# MaxRAMPercentage=75 按宿主机内存计算而吃光（有上限后 JVM 按上限算堆）。
+# ==========================================================================
+
+services:
+  # ============ MySQL：数据用命名卷持久化，首次启动自动导入 SQL ============
+  mysql:
+    image: mysql:8.0
+    container_name: smartadmin-mysql
+    ports:
+      - "127.0.0.1:3306:3306"
+      - "10.66.66.1:3306:3306"
+    restart: unless-stopped
+    mem_limit: 800m
+    environment:
+      TZ: Asia/Shanghai
+      # 密码来自 deploy/.env（已 gitignore），本机与服务器同一个文件，避免两边分叉
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in deploy/.env}
+      MYSQL_DATABASE: smart_admin_v3
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../sql/mysql/smart_admin_v32026-9-13.sql:/docker-entrypoint-initdb.d/01-snapshot.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  # ============ Redis ============
+  redis:
+    image: redis:7-alpine
+    container_name: smartadmin-redis
+    restart: unless-stopped
+    mem_limit: 128m
+    ports:
+      - "127.0.0.1:6379:6379"
+      - "10.66.66.1:6379:6379"
+    volumes:
+      - redis-data:/data
+
+  # ============ 后端：用 Dockerfile 在服务器上构建 ============
+  sa-admin:
+    build:
+      context: ../smart-admin-api-java17-springboot3
+    image: smartadmin-api:latest
+    container_name: smartadmin-api
+    restart: unless-stopped
+    mem_limit: 1024m
+    environment:
+      TZ: Asia/Shanghai
+      # 用环境变量覆盖 prod 配置里的 127.0.0.1，指向容器服务名
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/smart_admin_v3?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&allowMultiQueries=true&serverTimezone=Asia/Shanghai"
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in deploy/.env}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_DATABASE: 1
+    volumes:
+      - upload-data:/home/smart_admin_v3/upload
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # ============ Nginx：唯一对外入口，反代后端 + 托管前端 ============
+  nginx:
+    image: nginx:alpine
+    container_name: smartadmin-nginx
+    restart: unless-stopped
+    mem_limit: 128m
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
+      - ../smart-admin-web-javascript/dist:/usr/share/nginx/html
+      - ../smart-app/dist/build/h5:/usr/share/nginx/html/app:ro
+      - upload-data:/upload:ro
+    depends_on:
+      - sa-admin
+
+volumes:
+  mysql-data:
+  redis-data:
+  upload-data:

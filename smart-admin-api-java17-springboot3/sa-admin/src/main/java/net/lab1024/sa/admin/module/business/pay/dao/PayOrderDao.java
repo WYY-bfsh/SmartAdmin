@@ -19,4 +19,10 @@ public interface PayOrderDao extends BaseMapper<PayOrderEntity> {
     List<PayOrderVO> query(Page<?> page, @Param("query") PayOrderQueryForm query);
 
     PayOrderEntity selectByOrderNo(@Param("orderNo") String orderNo);
+
+    PayOrderEntity selectByTransactionId(@Param("transactionId") String transactionId);
+
+    PayOrderEntity selectByRefundNo(@Param("refundNo") String refundNo);
+
+    List<PayOrderEntity> listForRecon(@Param("payChannel") Integer payChannel, @Param("billDate") java.time.LocalDate billDate);
 }

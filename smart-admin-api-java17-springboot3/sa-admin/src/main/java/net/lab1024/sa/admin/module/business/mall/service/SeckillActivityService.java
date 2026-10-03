@@ -46,6 +46,12 @@ public class SeckillActivityService {
     @Resource
     private RedisService redisService;
 
+    @Resource
+    private MallWechatPayService mallWechatPayService;
+
+    @Resource
+    private MallAlipayPayService mallAlipayPayService;
+
     public MallConfigVO config() {
         mallSeedService.ensureReady();
         MallConfigVO vo = new MallConfigVO();
@@ -56,6 +62,8 @@ public class SeckillActivityService {
                 && StringUtils.isNotBlank(mallProperties.getExpress().getKuaidi100Customer()));
         vo.setH5Path(StringUtils.defaultIfBlank(mallProperties.getH5Path(), "http://175.27.131.7:8080/app/#/pages/mall/index"));
         fillMerchantQr(vo);
+        mallWechatPayService.fillConfig(vo);
+        mallAlipayPayService.fillConfig(vo);
         return vo;
     }
 

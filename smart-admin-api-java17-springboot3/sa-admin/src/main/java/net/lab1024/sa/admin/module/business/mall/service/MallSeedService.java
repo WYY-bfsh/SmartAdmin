@@ -18,9 +18,6 @@ import java.time.LocalDateTime;
 public class MallSeedService {
 
     @Resource
-    private MallSchemaService mallSchemaService;
-
-    @Resource
     private MallMemberDao mallMemberDao;
 
     @Resource
@@ -32,7 +29,6 @@ public class MallSeedService {
     private volatile boolean ready = false;
 
     public void ensureReady() {
-        mallSchemaService.ensureTables();
         if (ready) {
             return;
         }

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.pay.dao.PayReconItemDao">
+
+    <select id="query" resultType="net.lab1024.sa.admin.module.business.pay.domain.vo.PayReconItemVO">
+        SELECT *
+        FROM t_pay_recon_item
+        <where>
+            AND batch_id = #{query.batchId}
+            <if test="query.matchStatus != null">
+                AND match_status = #{query.matchStatus}
+            </if>
+            <if test="query.orderNo != null and query.orderNo != ''">
+                AND INSTR(order_no, #{query.orderNo})
+            </if>
+            <if test="query.handledFlag != null">
+                AND handled_flag = #{query.handledFlag}
+            </if>
+        </where>
+        <if test="query.sortItemList == null or query.sortItemList.size == 0">
+            ORDER BY item_id DESC
+        </if>
+    </select>
+
+    <select id="listByBatchId" resultType="net.lab1024.sa.admin.module.business.pay.domain.vo.PayReconItemVO">
+        SELECT *
+        FROM t_pay_recon_item
+        WHERE batch_id = #{batchId}
+        ORDER BY item_id ASC
+    </select>
+
+</mapper>

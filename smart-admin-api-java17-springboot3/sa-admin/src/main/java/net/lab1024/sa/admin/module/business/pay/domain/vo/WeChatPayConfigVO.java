@@ -29,4 +29,10 @@ public class WeChatPayConfigVO {
 
     @Schema(description = "私钥是否已配置")
     private Boolean privateKeyReady;
+
+    @Schema(description = "公众号 AppSecret 是否已配置（微信内 JSAPI 授权）")
+    private Boolean appSecretReady;
+
+    @Schema(description = "H5 支付 app_url")
+    private String h5AppUrl;
 }

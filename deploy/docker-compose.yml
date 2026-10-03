@@ -6,7 +6,7 @@ name: smartadmin
 #      服务器上不存在会导致容器启动失败
 #   2. mysql 初始化只导入一个完整数据快照（65 张表），不再挂整个 sql 目录 ——
 #      否则会按文件名顺序执行 4 个脚本、最后再被快照重建一次，既慢又易踩坑
-#   3. nginx 只保留 8080 对外 —— 80/443 已被 Caddy 占用（Hermes 面板在用）
+#   3. nginx 只保留 8081 对外（简历同步） —— 80/443 已被 Caddy 占用（Hermes 面板在用）
 # 另为每个服务加了内存上限，避免这台 3.6G 的机器被 JVM 的
 # MaxRAMPercentage=75 按宿主机内存计算而吃光（有上限后 JVM 按上限算堆）。
 # ==========================================================================
@@ -18,6 +18,7 @@ services:
     container_name: smartadmin-mysql
     ports:
       - "127.0.0.1:3306:3306"
+      - "10.66.66.1:3306:3306"
     restart: unless-stopped
     mem_limit: 800m
     environment:
@@ -41,6 +42,9 @@ services:
     container_name: smartadmin-redis
     restart: unless-stopped
     mem_limit: 128m
+    ports:
+      - "127.0.0.1:6379:6379"
+      - "10.66.66.1:6379:6379"
     volumes:
       - redis-data:/data
 
@@ -76,7 +80,7 @@ services:
     restart: unless-stopped
     mem_limit: 128m
     ports:
-      - "8080:80"
+      - "8081:80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/snippets:/etc/nginx/snippets:ro

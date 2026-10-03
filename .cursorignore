@@ -1,0 +1,69 @@
+# Cursor 索引排除（减少卡顿）
+# 放项目根目录：D:\Personal\project\smartadmin\.cursorignore
+# 日期：2026-09-16
+
+# ── 依赖目录（大头：666MB）─────────────────
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# ── 构建产物 ─────────────────────────────
+dist/
+*/dist/
+**/dist/
+build/
+.unpackage/
+.hbuilderx/
+
+# ── Java 构建产物 ────────────────────────
+target/
+*/target/
+**/target/
+*.jar
+*.war
+*.class
+
+# ── 上游参考代码（不参与开发，别索引）──────
+smart-admin-api-java8-springboot2/
+smart-admin-web-typescript/
+
+# ── 日志与锁文件 ─────────────────────────
+*.log
+logs/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ── 大体积二进制 / 媒体 ───────────────────
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+*.pdf
+*.mp4
+*.avi
+*.mov
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.svg
+
+# ── 编辑器 / 系统 ────────────────────────
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.git/
+
+# ── 敏感文件 ─────────────────────────────
+deploy/.env
+deploy/生产密码.txt
+deploy/*.key
+deploy/nginx/certs/
