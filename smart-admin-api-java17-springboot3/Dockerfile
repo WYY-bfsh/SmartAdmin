@@ -15,7 +15,7 @@ RUN mvn -B -q dependency:go-offline || true
 # 再复制源码进行打包（-Pprod 激活生产配置）
 COPY sa-base/src sa-base/src
 COPY sa-admin/src sa-admin/src
-RUN mvn -B clean package -DskipTests -Pprod \
+RUN MAVEN_OPTS="-Xmx384m -XX:MaxMetaspaceSize=192m" mvn -B clean package -DskipTests -Pprod \
     && ls sa-admin/target/*.jar | grep -v original | xargs -I{} cp {} /build/app.jar
 
 # ============ 运行阶段：只带 JRE，镜像更小 ============

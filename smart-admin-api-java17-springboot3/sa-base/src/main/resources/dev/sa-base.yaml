@@ -268,3 +268,11 @@ tencent:
     sign-name: ${TENCENT_SMS_SIGN_NAME:}
     template-id: ${TENCENT_SMS_TEMPLATE_ID:}
     region: ap-guangzhou
+
+
+# 客服 AI 问答。密钥只从环境变量读，不写进仓库。
+ai:
+  chat:
+    base-url: ${AI_CHAT_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    api-key: ${AI_CHAT_API_KEY:}
+    model: ${AI_CHAT_MODEL:qwen-plus}

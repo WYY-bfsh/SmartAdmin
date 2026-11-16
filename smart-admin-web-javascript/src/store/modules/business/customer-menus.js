@@ -56,6 +56,7 @@ function buildCustomerCatalog() {
     page(502, 500, '知识库', '/customer/knowledge', '/business/customer/knowledge/knowledge-list.vue', 'BookOutlined', true),
     page(503, 500, '信息查询', '/customer/info-query', '/business/customer/info-query/info-query.vue', 'SearchOutlined', false),
     page(512, 500, '问答管理', '/customer/qa', '/business/customer/qa/qa-list.vue', 'QuestionCircleOutlined', true),
+    page(517, 500, 'AI问答', '/customer/ai', '/business/customer/ai/ai-chat.vue', 'MessageOutlined', true),
   ]);
 }
 
@@ -78,6 +79,8 @@ function flattenCustomerMenus() {
     { menuId: 514, menuName: '创建提问', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 512, webPerms: 'cs:qa:ask', visibleFlag: true, disabledFlag: false, deletedFlag: false },
     { menuId: 515, menuName: '回答/驳回', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 512, webPerms: 'cs:qa:answer', visibleFlag: true, disabledFlag: false, deletedFlag: false },
     { menuId: 516, menuName: '删除问答', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 512, webPerms: 'cs:qa:delete', visibleFlag: true, disabledFlag: false, deletedFlag: false },
+    { menuId: 517, menuName: 'AI问答', menuType: MENU_TYPE_ENUM.MENU.value, parentId: 500, sort: 5, path: '/customer/ai', component: '/business/customer/ai/ai-chat.vue', icon: 'MessageOutlined', visibleFlag: true, disabledFlag: false, deletedFlag: false, cacheFlag: true, frameFlag: false },
+    { menuId: 518, menuName: 'AI问答', menuType: MENU_TYPE_ENUM.POINTS.value, parentId: 517, webPerms: 'cs:ai:chat', visibleFlag: true, disabledFlag: false, deletedFlag: false },
   ];
 }
 
@@ -87,14 +90,23 @@ export function ensureCustomerMenus(menuList) {
     (e) => e.menuId === 500 || e.menuId === 501 || e.component === '/business/customer/ticket/ticket-list.vue'
   );
   if (exists) {
-    return list;
+    const extra = flattenCustomerMenus().filter((item) => item.menuId === 517 || item.menuId === 518);
+    const missing = extra.filter((item) => !list.some((row) => row.menuId === item.menuId));
+    return missing.length ? list.concat(missing) : list;
   }
   return list.concat(flattenCustomerMenus());
 }
 
 export function prependCustomerMenuTree(menuTree) {
   const tree = Array.isArray(menuTree) ? menuTree : [];
-  if (tree.some((e) => e.menuId === 500 || e.menuName === '客服中心')) {
+  const catalog = tree.find((e) => e.menuId === 500 || e.menuName === '客服中心');
+  if (catalog) {
+    const children = Array.isArray(catalog.children) ? catalog.children : [];
+    if (!children.some((e) => e.menuId === 517 || e.path === '/customer/ai')) {
+      catalog.children = children.concat(
+        page(517, 500, 'AI问答', '/customer/ai', '/business/customer/ai/ai-chat.vue', 'MessageOutlined', true)
+      );
+    }
     return tree;
   }
   return [buildCustomerCatalog(), ...tree];

@@ -42,6 +42,8 @@ public class AdminSwaggerTagConst extends SwaggerTagConst {
 
         public static final String CUSTOMER_QA = "客服-问答管理";
 
+        public static final String CUSTOMER_AI = "客服-AI问答";
+
         public static final String MALL_SECKILL = "秒杀商城-活动与订单";
 
         public static final String MALL_H5 = "秒杀商城-用户端H5";
